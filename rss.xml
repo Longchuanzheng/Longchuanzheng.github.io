@@ -7,8 +7,8 @@
 
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
     <channel>
-        <title>Hugo 主题 MemE</title>
-        <link>https://example.com/</link>
+        <title>My way, the end is...</title>
+        <link>http://longchuanzheng.github.io/</link>
         <description>MemE 是一个强大且可高度定制的 GoHugo 博客主题，专为个人博客设计。</description>
         <generator>Hugo 0.94.1 https://gohugo.io/</generator>
         
@@ -23,15 +23,15 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Fri, 29 Apr 2022 08:48:07 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 29 Apr 2022 08:48:44 &#43;0800</lastBuildDate>
         
-            <atom:link rel="self" type="application/rss&#43;xml" href="https://example.com/rss.xml" />
+            <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
         
             <item>
                 <title>Hello World！ 你好 世界！</title>
-                <link>https://example.com/posts/hello-world/hello-world/</link>
-                <guid isPermaLink="true">https://example.com/posts/hello-world/hello-world/</guid>
+                <link>http://longchuanzheng.github.io/posts/hello-world/hello-world/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hello-world/hello-world/</guid>
                 <pubDate>Sat, 12 Mar 2022 23:04:05 &#43;0800</pubDate>
                 
                     <author>reuixiy@gmail.com (reuixiy)</author>
