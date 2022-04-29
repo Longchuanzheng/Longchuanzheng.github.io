@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Fri, 29 Apr 2022 19:41:25 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 29 Apr 2022 21:12:37 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -368,10 +368,10 @@
                 
                 <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
                 
-                    <description>&lt;h2 id=&#34;01-序言&#34;&gt;01. 序言&lt;/h2&gt;
-&lt;p&gt;  正如标题所说，本系列将介绍Raft的一些研究成果，本系列内容在2020年就已经完成。当时在读研究生，主要研究方向是区块链应用。希望可以发论文的我将目光投向共识算法，首先接触到的当然是Paxos算法，花了大概一个月左右将Lamport的那篇《The part-time parliament》看了一遍，大师的论文功力的确深厚，不仅文字易懂并且连文末的数学推导也比我看过的其他大部分论文中的好懂。虽然网络上有很多Paxos算法的描述，但是我认为大部分一两页纸的描述并不能反应Paxos算法的精髓只能作为辅助参考。如果想从Paxos算法开始自己的共识算法研究的话非常推荐从该论文入手。&lt;/p&gt;
+                    <description>&lt;h2 id=&#34;序言&#34;&gt;序言&lt;/h2&gt;
+&lt;p&gt;  正如标题所说，本系列将介绍Raft的一些研究成果，本系列内容在2020年就已经完成。当时在读研究生，主要研究方向是区块链应用。希望可以发论文的我将目光投向共识算法，首先接触到的当然是Paxos算法，花了大概一个月左右将Lamport的那篇《The part-time parliament》&lt;sup id=&#34;fnref:1&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:1&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;1&lt;/a&gt;&lt;/sup&gt;看了一遍，大师的论文功力的确深厚，不仅文字易懂并且连文末的数学推导也比我看过的其他大部分论文中的好懂。虽然网络上有很多Paxos算法的描述，但是我认为大部分一两页纸的描述并不能反应Paxos算法的精髓只能作为辅助参考。如果想从Paxos算法开始自己的共识算法研究的话非常推荐从该论文入手。&lt;/p&gt;
 &lt;p&gt;  看完论文后我的确能大概理解Paxos算法，但是该算法的易理解性让我感觉自己可能无法在短时间内对该算法进行什么后续研究。首先是Paxos算法中如何达成共识的流程并不清晰，隐藏在整个算法流程中。其次因此所带来的问题是代码描述可能更考量工程人员的代码能力。因此我继续寻找目标，而我第二个目标就是Raft算法。&lt;/p&gt;
-&lt;p&gt;  Raft(木筏)当年还有个很火的同名游戏。首先吸引到我的就是论文作者所强调的易理解性。 随着对Raft算法及其相关研究的调研不断深入，愈加重视易理解性在解决复杂问题中的作用。本系列将首先介绍共识算法的一些基础知识如复制状态机等以及原始的Raft算法；接着主要从“从节点读”操作、降低集群负载、提高集群可拓展性以及加速日志复制四个方向介绍相关改进研究进展。&lt;/p&gt;
+&lt;p&gt;  Raft(木筏)当年还有个很火的同名游戏。首先吸引到我的就是论文作者所强调的易理解性&lt;sup id=&#34;fnref:2&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:2&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;2&lt;/a&gt;&lt;/sup&gt;。 随着对Raft算法及其相关研究的调研不断深入，愈加重视易理解性在解决复杂问题中的作用。本系列将首先介绍共识算法的一些基础知识如复制状态机等以及原始的Raft算法；接着主要从“从节点读”操作、降低集群负载、提高集群可拓展性以及加速日志复制四个方向介绍相关改进研究进展。&lt;/p&gt;
 &lt;p&gt;  当然还有一些共识算法包括Viewstamped Replication(VR)算法，并没有被广泛使用，主要应用在Harp文件系统中。VR算法与Raft算法有一定相似性，值得注意的是VR算法中的轮询leader选举机制且所有节点均可积极发送消息，并支持在没有非易失性存储的情况下运行。Zab(Zookeeper Atomic Broadcast)是更晚出现的共识算法，应用在当今最流行的开源共识系统Apache Zookeeper协调服务中．Raft算法中集群成员更替的流程与Zab中所使用的较为相似．在Raft算法的设计中参考了上文所涉及算法的一些特性，在表1中列举了这些算法之间的关键异同点。这些算法将不会进行具体展开。&lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -420,21 +420,90 @@
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;center&gt;表1 各共识算法异同总结&lt;/center&gt;
-&lt;h2 id=&#34;02-相关知识&#34;&gt;02. 相关知识&lt;/h2&gt;
+&lt;h2 id=&#34;相关知识&#34;&gt;相关知识&lt;/h2&gt;
 &lt;p&gt;  该部分主要介绍共识达成的条件、quorum这个概念以及复制状态机。&lt;/p&gt;
-&lt;h3 id=&#34;21-共识达成的条件&#34;&gt;2.1 共识达成的条件&lt;/h3&gt;
-&lt;p&gt;  对于共识达成的条件在网络上有相当多的讨论，可能无法得出统一结论，这里的内容来自于Ongaro D介绍Raft算法的的博士论文《Consensus: Bridging theory and practice》。主要包含三个条件一致性、合法性以及可终结性。&lt;/p&gt;
+&lt;h3 id=&#34;共识达成的条件&#34;&gt;共识达成的条件&lt;/h3&gt;
+&lt;p&gt;  对于共识达成的条件在网络上有相当多的讨论，可能无法得出统一结论，这里的内容来自于Ongaro D介绍Raft算法的的博士论文《Consensus: Bridging theory and practice》&lt;sup id=&#34;fnref:2&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:2&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;2&lt;/a&gt;&lt;/sup&gt;。主要包含三个条件一致性、合法性以及可终结性：&lt;/p&gt;
 &lt;p&gt;一致性(agreement)：所有正常的节点将得出相同的值;&lt;/p&gt;
 &lt;p&gt;合法性(validity)：被决定的值由一个正常的节点提出;&lt;/p&gt;
 &lt;p&gt;可终结性(termination)：所有正常节点最终将决定一个值。&lt;/p&gt;
-&lt;h3 id=&#34;22-quorum&#34;&gt;2.2 quorum&lt;/h3&gt;
+&lt;h3 id=&#34;quorum&#34;&gt;quorum&lt;/h3&gt;
 &lt;p&gt;  传统的共识算法需要在不存在拜占庭行为的异步系统中满足一致性和合法性，当失效的节点少于某阈值(quorum number)时可终结性也需要被满足，这个为了在集群中达成共识所需要的最少节点的集合称为quorum。Multi-Paxos、VR算法以及Raft算法在(&lt;em&gt;2f+1)&lt;em&gt;个节点的集群中quorum的大小为(&lt;em&gt;f+1)&lt;/em&gt;，即可以容忍&lt;/em&gt;f&lt;/em&gt;个节点同时失效(此时算法活性为&lt;em&gt;f&lt;/em&gt;)．由于任何两个quorum之间都有重叠节点，对某个quorum进行的操作在未来至少有一个quorum中有所标记,从而保证达成的共识不会被遗忘。&lt;/p&gt;
-&lt;h3 id=&#34;23-复制状态机&#34;&gt;2.3 复制状态机&lt;/h3&gt;
+&lt;h3 id=&#34;复制状态机&#34;&gt;复制状态机&lt;/h3&gt;
 &lt;p&gt;  共识算法通常在复制状态机的背景中提出，如图1所示，复制状态机通常包括共识模型、日志以及状态机。用户向复制状态机发送指令，指令被传递给共识模型(步骤1)，当共识模型决定将该命令在复制状态机集群内达成共识后将命令加入(apply)日志，并与其他复制状态机内的共识模型进行交互，将命令复制到其他日志中并保证命令在日志中排列顺序相同(步骤2)。状态机按日志顺序依次执行(commit)命令(步骤3)并将结果返回给用户(步骤4)。当初始状态一致，命令以及执行顺序一致，所有状态机最后的状态也将一致，从而保证集群内部的一致性。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;复制状态机示意图&#34;&gt;&lt;/p&gt;
 &lt;center&gt;图1 复制状态机示意图&lt;/center&gt;
 &lt;p&gt;  用博主自己的话来说，quorum在很多关于共识算法的文章中都有出现，但是很难用中文去翻译，这个概念主要是指共识算法中达成一个共识最少需要保持统一的最小集群中节点的数量。如Raft算法中若集群总结点数为(&lt;em&gt;2f+1)&lt;em&gt;那么只有当(&lt;em&gt;f+1)&lt;em&gt;个节点都将某条数据进行记录，这条记录才能被成为该集群中的共识。从而还会引出算法活性这个概念，算法活性就是该集群能容忍同时下线节点的数量，Raft算法中为&lt;/em&gt;f&lt;/em&gt;，当&lt;/em&gt;f&lt;/em&gt;个节点下线后，由于quorum为(&lt;em&gt;f+1)&lt;/em&gt;，所以任何之前达成过的共识都会在剩下正常的节点中有记录。当然如果同时下线的节点数超过&lt;em&gt;f&lt;/em&gt;时，该集群就已经没有意义了。&lt;/p&gt;
 &lt;p&gt;  虽然复制状态机这个概念相当于废话，对于同样状态的状态机，收到相同的指令理论上当然应该还会到达另一个相同状态。但我认为它可以更好理解共识算法该如何利用。数据库的一条插入语句可以被认为数据库集群中需要达成的共识，在我为了找工作去看MySQL，Redis等数据库的集群实现时会体会到复制状态机这个概念。&lt;/p&gt;
+&lt;h3 id=&#34;24原始raft算法&#34;&gt;2.4原始Raft算法&lt;/h3&gt;
+&lt;p&gt;  Raft算法根据共识模型节点被定义为以下三种角色之一：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;follower(从者)：被动节点，只对接收到的消息进行回复，不主动发起任何通信。&lt;/li&gt;
+&lt;li&gt;candidate(候选者)：主动节点，发起选举，尝试成为leader。&lt;/li&gt;
+&lt;li&gt;leader(领导者)：主动节点，在任期内管理整个集群，处理来自用户的命令(当用户向follower发出请求，follower将请求重定向给leader)，负责将日志项复制到其他节点的日志中。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;  Raft算法如复制状态机所述对日志进行管理，日志结构如图2所示，由日志项构成，每个日志项包含一条状态机命令，并包含每个任期的标识(term)以及确定该日志项在日志中位置的索引(index)。Raft算法中时间被划分为的长度不等的term，term由整数编号并单调增加。每个节点维持日志中最新日志项所处的term(current term)以及最新应用的日志项的index(commit index)。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;2.png&#34; alt=&#34;Raft算法中日志结构&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图2 Raft算法中日志结构&lt;/center&gt;
+&lt;p&gt;  Raft集群中节点采用远程过程调用(RPC，Remote Procedure Call)进行通信，RequestVote RPCs由candidate在选举中发起收集投票，follower节点收到后回复同意或拒绝；AppendEntries RPCs由leader发起在需要达成共识时向集群中其他节点复制日志项，并定时发送空AppendEntries消息作为心跳消息保持自己的领导地位，当follower收到有效的AppendEntries RPCs后将回复代表接收成功的消息，而收到不匹配的AppendEntries将回复拒绝接收。&lt;/p&gt;
+&lt;p&gt;  集群中节点日志须与leader节点日志保持一致。leader节点也负责集群中日志项的复制工作。leader根据用户命令生成相应日志项，将其加入AppendEntries并广播希望将该日志项复制到各节点中，当leader对于该日志项的复制请求收到了来自集群中半数以上节点复制成功的回复后将该日志项应用到状态机中，并将结果返回给用户。在下一个AppendEntries中通知其他节点更新commit index，将该日志项以及之前所有未应用日志项应用到状态机中。而follower节点根据term和index接受与本地日志所匹配的日志项保证日志中日志项顺序。&lt;/p&gt;
+&lt;p&gt;  节点状态的转移如图3所示。如果follower在计时器超时之前没有收到任何有效消息将转变为candidate并开始选举，candidate在选举开始时自增本地term并广播RequestVote，当follower之前没有收到过包含大于等于此term的其他RequestVote，将投同意票。candidate在一个term中获得大部分节点的选票后成为新leader，发送心跳消息表明自己的领导地位，原leader的任期也随之结束，其他candidate也将回到follower状态。若candidate在计时器超时之前没有收到足够多选票且没有收到其他节点的心跳消息则自增term开始新一轮选举。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;3.png&#34; alt=&#34;节点状态转移过程&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图3 节点状态转移过程&lt;/center&gt;
+&lt;p&gt;  还有一些研究基于算法流程总结算法特性，从而证明Raft算法的安全性，相关工作也有的是通过TLA+语言完成的，这部分研究我没有探究，看起来比较复杂。&lt;sup id=&#34;fnref:3&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:3&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;3&lt;/a&gt;&lt;/sup&gt;&lt;sup id=&#34;fnref:4&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:4&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;4&lt;/a&gt;&lt;/sup&gt;&lt;sup id=&#34;fnref:5&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:5&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;5&lt;/a&gt;&lt;/sup&gt;&lt;sup id=&#34;fnref:6&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:6&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;6&lt;/a&gt;&lt;/sup&gt;还有研究通过马尔科夫链模型对Raft算法进行建模&lt;sup id=&#34;fnref:7&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:7&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;7&lt;/a&gt;&lt;/sup&gt;，从而进行相关探究。为了贴近事实并保证模型的简洁，假设集群中有&lt;em&gt;N&lt;/em&gt;个节点且&lt;em&gt;N&lt;/em&gt;为奇数，通信延时远远小于选举超时界限，而节点失效的时长远远大于选举超时界限．因此节点只会因为网络丢包在时间界限内无法接收到消息。follower维持选举计数器，在规定时间界限内没有收到leader发送的心跳消息则计数器减1，当计数器值置零即连续多次未收到心跳消息后，follower转换为candidate开始选举。最终计算出转移矩阵并得出一系列结论，包括集群分裂概率、平均日志复制数、follower接收心跳消息的数量以及选举所耗时间等。通过数学模型对Raft算法状态转移进行描述，加深对Raft算法理解。&lt;/p&gt;
+&lt;h2 id=&#34;从节点读相关研究&#34;&gt;&amp;quot;从节点读&amp;quot;相关研究&lt;/h2&gt;
+&lt;p&gt;  Raft算法的存储实现中状态机以数据库的形式存在，实现在分布式系统中提供冗余存储。“写命令”向节点数据库中增删改数据，由leader负责将命令在集群内其他节点中执行。而“读命令”读取数据库内容，只需与leader节点中数据库进行交互即可。因此leader节点所承担的负载远远大于其他节点。由于大多数follower的状态只与leader有很小的延迟，从follower节点中读取数据有大概率和leader中一致。因此很多实现中让follower节点处理读命令，分担leader节点的负担。但leader对于日志项的应用早于follower，在leader以应用“写命令”而follower还未完成这段时间内通过leader进行读操作可以获得正确结果。而读取follower中数据库的状态可能出现数据过期，数据缺失等异常。在后来找工作的时候发现这部分研究与Redis主从复制以及相应的一致性问题有一定关联。&lt;/p&gt;
+&lt;h3 id=&#34;quorum读方法&#34;&gt;“quorum读”方法&lt;/h3&gt;
+&lt;p&gt;  这种读取方法基于quorum，原文是将Raft算法用于CockroachDB的应用研究&lt;sup id=&#34;fnref:8&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:8&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;8&lt;/a&gt;&lt;/sup&gt;，主要分为普通quorum读和普通quorum读，有些内容与MySQL的乐观锁有些相似但是这是在集群环境中的问题。&lt;/p&gt;
+&lt;h4 id=&#34;普通quorum读&#34;&gt;普通&amp;quot;quorum读&amp;quot;&lt;/h4&gt;
+&lt;p&gt;  当leader节点收到用户的读请求后，将请求转发给集群中大部分follower节点．节点收到请求后，读取并返回与“键”相对应“值”，并附上该键值对最后一次稳定的时间戳，表示状态机对该键值对最后一次修改的时间。leader节点选择时间戳最近的回复，将其中的值返回给用户。虽然在在这种读方法中也可能出现上文提到的未知错误，但是由于得到的值是集群中大部分follower节点状态中的最新状态，过期的可能性相对较小．&lt;/p&gt;
+&lt;h4 id=&#34;强一致性quorum读&#34;&gt;强一致性&amp;quot;quorum读&amp;quot;&lt;/h4&gt;
+&lt;p&gt;  为了弥补quorum读中的问题，强一致性quorum读利用CockroachDB的读写特性。当节点接收到读请求与写操作发生冲突则仅返回当时的时间戳，只有与写操作不冲突时才返回值以及时间戳。如果网关节点收到的时间戳最靠前的回复中只有时间戳，则至少说明该读操作与写操作有冲突，本次查询失败，还可以使用退避算法继续进行查询。&lt;/p&gt;
+&lt;h3 id=&#34;反馈一致性模型&#34;&gt;反馈一致性模型&lt;/h3&gt;
+&lt;p&gt;  在强一致性模型的基础上将“从节点读”中的异常率当成模型参数，用户可以将自定的错误率作为参数输入模型中。基于反馈一致性Philip等提出了Reflective Consul&lt;sup id=&#34;fnref:9&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:9&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;9&lt;/a&gt;&lt;/sup&gt;,其中利用反馈一致性来动态控制因为从节点读而产生异常的概率从而更好的平衡负载与效率。虽然在读操作过程中可能出现各种各样的异常情况，但读取到过期数据这种异常出现的频率最高，因此那篇文献中中主要考虑这种异常。&lt;/p&gt;
+&lt;p&gt;  模型如图4所示，通过控制逻辑处理用户请求，将请求在本地处理或发送给leader，返回结果中附有请求完成时的时间戳，该键值也被保存在异常检测单元。控制逻辑通过读延迟统计与异常率决定当前请求分发的对象，异常率统计由异常检测单元完成，单元检测每个键值对的每一次读请求。对于每个键有两个输入:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;最新一次读操作的记录，包含读出的值$v_r$以及读取的时间$t_r$；&lt;/li&gt;
+&lt;li&gt;包含相应数据的以应用日志项，其中包括应用到状态机中的值$v_c$以及应用的时间$t_c$。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;一个读异常可以被定义为:
+$$
+v_r \ne v_c \land t_c \lt t_r
+$$&lt;/p&gt;
+&lt;center&gt;该公式表示当读取的值与以应用的值不同且应用发生在读操作之前时出现异常&lt;/center&gt;
+&lt;p&gt;  通过控制逻辑用户灵活设定读操作的规定延时和异常率，当延时较低则可以通过将更多读请求交给leader来获得更低的异常率，而效率无法满足时则牺牲可靠性提高效率，从而更灵活的达到规定的性能。&lt;/p&gt;
+&lt;section class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
+&lt;hr&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn:1&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Leslie L. The part-time parliament[J]. ACM Transactions on Computer Systems, 1998, 16(2): 133-169.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:1&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:2&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Ongaro D. Consensus: Bridging theory and practice[D]. Stanford University, 2014.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:2&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:3&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Ongaro D, Ousterhout J. In search of an understandable consensus algorithm[C]//2014 USENIX Annual Technical Conference (USENIX ATC’ 14). Berkeley, CA: USENIX Association, 2014: 305-319.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:3&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:4&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Yu G, Hua L, Yuanping L, et al. Using TLA+ to Specify Leader Election of Raft Algorithm with Consideration of Leadership Transfer in Multiple Controllers[C]//2019 IEEE 19th International Conference on Software Quality, Reliability and Security Companion (QRS-C). Piscataway, NJ: IEEE, 2019: 219-226.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:4&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:5&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Lincoln C R. Specifying Systems: The TLA+ Language and Tools for Hardware and Software Engineers[J]. Software Quality Professional, 2003, 5(4): 43.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:5&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:6&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Cousineau D, Doligez D, Lamport L, et al. TLA+ proofs[C]//International Symposium on Formal Methods. Heidelberg, Berlin, Germany: Springer, 2012: 147-154.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:6&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:7&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Huang D, Ma X, Zhang S. Performance analysis of the raft consensus algorithm for private blockchains[J]. IEEE Transactions on Systems, Man, and Cybernetics: Systems, 2019, 50(1): 172-181.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:7&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:8&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Arora V, Mittal T, Agrawal D, et al. Leader or majority: Why have one when you can have both? improving read scalability in raft-like consensus protocols[C]//9th USENIX Workshop on Hot Topics in Cloud Computing (HotCloud 17). Berkeley, CA: USENIX Association, 2017[2020.12.25]. &lt;a href=&#34;https://www.usenix.org/conference/hotcloud17/program/presentation/arora&#34;&gt;https://www.usenix.org/conference/hotcloud17/program/presentation/arora&lt;/a&gt;&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:8&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:9&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Dexter P, Sendir B, Chiu K. Detecting and Reacting to Anomalies in Relaxed Uses of Raft[C]//2020 20th IEEE/ACM International Symposium on Cluster, Cloud and Internet Computing (CCGRID). Piscataway, NJ: IEEE, 2020: 659-668.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:9&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/section&gt;
 </description>
                 
                 
