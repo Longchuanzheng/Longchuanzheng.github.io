@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">Hugo 主题 MemE</title>
     <subtitle type="html">MemE 是一个强大且可高度定制的 GoHugo 博客主题，专为个人博客设计。</subtitle>
-    <updated>2022-04-29T08:39:22&#43;08:00</updated>
+    <updated>2022-04-29T08:45:16&#43;08:00</updated>
     <id>https://example.com/</id>
     <link rel="alternate" type="text/html" href="https://example.com/" />
     <link rel="self" type="application/atom&#43;xml" href="https://example.com/atom.xml" />
@@ -16,4 +16,34 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.94.1">Hugo</generator>
+        <entry>
+            <title type="text">Hello World！ 你好 世界！</title>
+            <link rel="alternate" type="text/html" href="https://example.com/posts/hello-world/hello-world/" />
+            <id>https://example.com/posts/hello-world/hello-world/</id>
+            <updated>2022-04-25T22:04:51&#43;08:00</updated>
+            <published>2022-03-12T23:04:05&#43;08:00</published>
+            <author>
+                    <name>reuixiy</name>
+                    <uri>https://io-oi.me/</uri>
+                    <email>reuixiy@gmail.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">Hello World！ 你好 世界！ 测试图片标题-图片来自网络</summary>
+            
+                <content type="html">&lt;p&gt;Hello World！ 你好 世界！&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;testimg.jpeg&#34; alt=&#34;testimg&#34;&gt;&lt;/p&gt;
+&lt;center&gt;测试图片标题-图片来自网络&lt;/center&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                
+                    
+                
+            
+        </entry>
+    
 </feed>
