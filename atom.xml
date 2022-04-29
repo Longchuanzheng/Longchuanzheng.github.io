@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2022-04-29T14:38:14&#43;08:00</updated>
+    <updated>2022-04-29T14:52:59&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,18 +20,16 @@
             <title type="text">使用hugo搭建博客的简单流程-win10</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo-use/hugo-use/" />
             <id>http://longchuanzheng.github.io/posts/hugo-use/hugo-use/</id>
-            <updated>2022-04-29T10:51:47&#43;08:00</updated>
+            <updated>2022-04-29T14:51:39&#43;08:00</updated>
             <published>2022-04-29T10:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
                     <uri>http://longchuanzheng.github.io/</uri>
                     <email>zal42@outlook.com</email>
                     </author>
-            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">[TOC] 1. 安装Hugo（extended扩展版） 安装 Hugo（extended扩展版） ~ $……</summary>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">1. 安装 Hugo（extended扩展版） ~ $ scoop install hugo-extended 2. 生成Hugo站点，在目标目录执行……</summary>
             
-                <content type="html">&lt;p&gt;[TOC]&lt;/p&gt;
-&lt;h3 id=&#34;1-安装hugoextended扩展版&#34;&gt;1. 安装Hugo（extended扩展版）&lt;/h3&gt;
-&lt;h3 id=&#34;安装-hugoextended扩展版&#34;&gt;安装 Hugo（extended扩展版）&lt;/h3&gt;
+                <content type="html">&lt;h3 id=&#34;1-安装-hugoextended扩展版&#34;&gt;1. 安装 Hugo（extended扩展版）&lt;/h3&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ scoop install hugo-extended
 &lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;2-生成hugo站点在目标目录执行&#34;&gt;2. 生成Hugo站点，在目标目录执行：&lt;/h3&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ hugo new site hugo-blog
@@ -219,17 +217,16 @@
             <title type="text">Raft算法研究现状</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/raft/raft/" />
             <id>http://longchuanzheng.github.io/posts/raft/raft/</id>
-            <updated>2022-04-29T14:28:50&#43;08:00</updated>
+            <updated>2022-04-29T14:52:47&#43;08:00</updated>
             <published>2022-03-12T23:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
                     <uri>http://longchuanzheng.github.io/</uri>
                     <email>zal42@outlook.com</email>
                     </author>
-            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">[TOC] 01. 序言 正如标题所说，本系列将介绍Raft的一些研究成果，本系列内容在2020年就已……</summary>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">01. 序言 正如标题所说，本系列将介绍Raft的一些研究成果，本系列内容在2020年就已经……</summary>
             
-                <content type="html">&lt;p&gt;[TOC]&lt;/p&gt;
-&lt;h1 id=&#34;01-序言&#34;&gt;01. 序言&lt;/h1&gt;
+                <content type="html">&lt;h2 id=&#34;01-序言&#34;&gt;01. 序言&lt;/h2&gt;
 &lt;p&gt;  正如标题所说，本系列将介绍Raft的一些研究成果，本系列内容在2020年就已经完成。当时在读研究生，主要研究方向是区块链应用。希望可以发论文的我将目光投向共识算法，首先接触到的当然是Paxos算法，花了大概一个月左右将Lamport的那篇《The part-time parliament》看了一遍，大师的论文功力的确深厚，不仅文字易懂并且连文末的数学推导也比我看过的其他大部分论文中的好懂。虽然网络上有很多Paxos算法的描述，但是我认为大部分一两页纸的描述并不能反应Paxos算法的精髓只能作为辅助参考。如果想从Paxos算法开始自己的共识算法研究的话非常推荐从该论文入手。&lt;/p&gt;
 &lt;p&gt;  看完论文后我的确能大概理解Paxos算法，但是该算法的易理解性让我感觉自己可能无法在短时间内对该算法进行什么后续研究。首先是Paxos算法中如何达成共识的流程并不清晰，隐藏在整个算法流程中。其次因此所带来的问题是代码描述可能更考量工程人员的代码能力。因此我继续寻找目标，而我第二个目标就是Raft算法。&lt;/p&gt;
 &lt;p&gt;  Raft(木筏)当年还有个很火的同名游戏。首先吸引到我的就是论文作者所强调的易理解性。 随着对Raft算法及其相关研究的调研不断深入，愈加重视易理解性在解决复杂问题中的作用。本系列将首先介绍共识算法的一些基础知识如复制状态机等以及原始的Raft算法；接着主要从“从节点读”操作、降低集群负载、提高集群可拓展性以及加速日志复制四个方向介绍相关改进研究进展。&lt;/p&gt;
@@ -281,16 +278,16 @@
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;center&gt;表1 各共识算法异同总结&lt;/center&gt;
-&lt;h1 id=&#34;02-相关知识&#34;&gt;02. 相关知识&lt;/h1&gt;
+&lt;h2 id=&#34;02-相关知识&#34;&gt;02. 相关知识&lt;/h2&gt;
 &lt;p&gt;  该部分主要介绍共识达成的条件、quorum这个概念以及复制状态机。&lt;/p&gt;
-&lt;h2 id=&#34;21-共识达成的条件&#34;&gt;2.1 共识达成的条件&lt;/h2&gt;
+&lt;h3 id=&#34;21-共识达成的条件&#34;&gt;2.1 共识达成的条件&lt;/h3&gt;
 &lt;p&gt;  对于共识达成的条件在网络上有相当多的讨论，可能无法得出统一结论，这里的内容来自于Ongaro D介绍Raft算法的的博士论文《Consensus: Bridging theory and practice》。主要包含三个条件一致性、合法性以及可终结性。&lt;/p&gt;
 &lt;p&gt;一致性(agreement)：所有正常的节点将得出相同的值;&lt;/p&gt;
 &lt;p&gt;合法性(validity)：被决定的值由一个正常的节点提出;&lt;/p&gt;
 &lt;p&gt;可终结性(termination)：所有正常节点最终将决定一个值。&lt;/p&gt;
-&lt;h2 id=&#34;22-quorum&#34;&gt;2.2 quorum&lt;/h2&gt;
+&lt;h3 id=&#34;22-quorum&#34;&gt;2.2 quorum&lt;/h3&gt;
 &lt;p&gt;  传统的共识算法需要在不存在拜占庭行为的异步系统中满足一致性和合法性，当失效的节点少于某阈值(quorum number)时可终结性也需要被满足，这个为了在集群中达成共识所需要的最少节点的集合称为quorum。Multi-Paxos、VR算法以及Raft算法在(&lt;em&gt;2f+1)&lt;em&gt;个节点的集群中quorum的大小为(&lt;em&gt;f+1)&lt;/em&gt;，即可以容忍&lt;/em&gt;f&lt;/em&gt;个节点同时失效(此时算法活性为&lt;em&gt;f&lt;/em&gt;)．由于任何两个quorum之间都有重叠节点，对某个quorum进行的操作在未来至少有一个quorum中有所标记,从而保证达成的共识不会被遗忘。&lt;/p&gt;
-&lt;h2 id=&#34;23-复制状态机&#34;&gt;2.3 复制状态机&lt;/h2&gt;
+&lt;h3 id=&#34;23-复制状态机&#34;&gt;2.3 复制状态机&lt;/h3&gt;
 &lt;p&gt;  共识算法通常在复制状态机的背景中提出，如图1所示，复制状态机通常包括共识模型、日志以及状态机。用户向复制状态机发送指令，指令被传递给共识模型(步骤1)，当共识模型决定将该命令在复制状态机集群内达成共识后将命令加入(apply)日志，并与其他复制状态机内的共识模型进行交互，将命令复制到其他日志中并保证命令在日志中排列顺序相同(步骤2)。状态机按日志顺序依次执行(commit)命令(步骤3)并将结果返回给用户(步骤4)。当初始状态一致，命令以及执行顺序一致，所有状态机最后的状态也将一致，从而保证集群内部的一致性。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;复制状态机示意图&#34;&gt;&lt;/p&gt;
 &lt;center&gt;图1 复制状态机示意图&lt;/center&gt;
