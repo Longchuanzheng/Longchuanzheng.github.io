@@ -23,10 +23,176 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Fri, 29 Apr 2022 10:15:48 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 29 Apr 2022 10:52:49 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
+        
+            <item>
+                <title>使用hugo搭建博客的简单流程-win10</title>
+                <link>http://longchuanzheng.github.io/posts/hugo-use/hugo-use/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugo-use/hugo-use/</guid>
+                <pubDate>Fri, 29 Apr 2022 10:04:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;[TOC]&lt;/p&gt;
+&lt;h3 id=&#34;1-安装hugoextended扩展版&#34;&gt;1. 安装Hugo（extended扩展版）&lt;/h3&gt;
+&lt;h3 id=&#34;安装-hugoextended扩展版&#34;&gt;安装 Hugo（extended扩展版）&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ scoop install hugo-extended
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;2-生成hugo站点在目标目录执行&#34;&gt;2. 生成Hugo站点，在目标目录执行：&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ hugo new site hugo-blog
+~ $ cd hugo-blog
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;3-安装主题&#34;&gt;3. 安装主题&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ git init
+~/hugo-blog $ git submodule add --depth 1 https://github.com/reuixiy/hugo-theme-meme.git themes/meme
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;31-使用主题的config替换hugo的config文件&#34;&gt;3.1 使用主题的config替换hugo的config文件&lt;/h4&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ rm config.toml &amp;amp;&amp;amp; cp themes/meme/config-examples/zh-cn/config.toml config.toml
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;32-添加一个页面于文章&#34;&gt;3.2 添加一个页面于文章&lt;/h4&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ hugo new &amp;#34;posts/hello-world.md&amp;#34;
+~/hugo-blog $ hugo new &amp;#34;about/_index.md&amp;#34;
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;33-测试安装结果&#34;&gt;3.3 测试安装结果&lt;/h4&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ hugo server -D
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;4-通过github发布&#34;&gt;4. 通过github发布&lt;/h3&gt;
+&lt;h4 id=&#34;41-在创建github个人主页仓库&#34;&gt;4.1 在创建github个人主页仓库&lt;/h4&gt;
+&lt;p&gt;仓库名称为 &amp;lt;username&amp;gt;.github.io （public）&lt;/p&gt;
+&lt;h4 id=&#34;42-在github创建hugo项目仓库用于文章发布&#34;&gt;4.2 在github创建hugo项目仓库用于文章发布&lt;/h4&gt;
+&lt;p&gt;与本地hugo目录绑定(private)即可&lt;/p&gt;
+&lt;p&gt;将刚刚创建的hugo-blog下除了.git文件以外的文件放入hugo仓库的本地目录&lt;/p&gt;
+&lt;p&gt;在hugo目录下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;将public目录中的内容移到 &amp;lt;username&amp;gt;.github.io仓库中&lt;/li&gt;
+&lt;li&gt;将public目录删除&lt;/li&gt;
+&lt;li&gt;将hugo目录的config文件中的baseUrl设为 &amp;lt;username&amp;gt;.github.io&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;运行&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ git submodule add -b main https://github.com/&amp;lt;USERNAME&amp;gt;/&amp;lt;USERNAME&amp;gt;.github.io.git public
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;将hugo目录中的public目录与&amp;lt;username&amp;gt;.github.io的public目录绑定（这里建议使用SSH地址）&lt;/p&gt;
+&lt;h3 id=&#34;5-添加评论模块&#34;&gt;5. 添加评论模块&lt;/h3&gt;
+&lt;p&gt;利用utterances项目，将某个public仓库的issue作为评论区。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;01.png&#34; alt=&#34;image&#34;&gt;&lt;/p&gt;
+&lt;p&gt;修改config文件&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt; # 是否开启（全局设置）
+    enableComments = true
+    # 说明：文章的 Front Matter 中的 `comments`
+    #      的优先级高于此处
+
+    # 直接加载评论，不需要手动点击按钮加载
+    autoLoadComments = true
+
+## Utterances
+    enableUtterances = true
+    utterancesRepo = &amp;#34;longchuanzheng/longchuanzheng.github.io&amp;#34;
+    utterancesIssueTerm = &amp;#34;pathname&amp;#34;
+    utterancesTheme = &amp;#34;github-light&amp;#34;
+    utterancesThemeDark = &amp;#34;photon-dark&amp;#34;
+    utterancesLabel = &amp;#34;comment&amp;#34;
+    # 说明：https://utteranc.es/
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;6-修改页面&#34;&gt;6. 修改页面&lt;/h3&gt;
+&lt;p&gt;在hugo目录的content目录下创建新的页面&lt;/p&gt;
+&lt;p&gt;修改config文件中的必要信息&lt;/p&gt;
+&lt;p&gt;运行py脚本更新public目录中的内容将其push到 &amp;lt;username&amp;gt;.github.io中&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;20
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;21
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;22
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;23
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;24
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;25
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-python&#34; data-lang=&#34;python&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;ch&#34;&gt;#!/bin/sh&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 任一步骤执行失败都会终止整个部署过程&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;nb&#34;&gt;set&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;e&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;printf&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;&lt;/span&gt;&lt;span class=&#34;se&#34;&gt;\033&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;[0;32mDeploying updates to GitHub...&lt;/span&gt;&lt;span class=&#34;se&#34;&gt;\033&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;[0m&lt;/span&gt;&lt;span class=&#34;se&#34;&gt;\n&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 构建静态内容&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;hugo&lt;/span&gt; &lt;span class=&#34;c1&#34;&gt;# if using a theme, replace with `hugo -t &amp;lt;YOURTHEME&amp;gt;`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 切换到 Public 文件夹&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;cd&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;public&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 添加更改到 git&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;git&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;add&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 提交更改&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;msg&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;rebuilding site $(date)&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;[&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;n&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;$*&amp;#34;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;];&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;then&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;msg&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;#34;$*&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;fi&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;git&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;commit&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;m&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;#34;$msg&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;# 推送到远程仓库&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;n&#34;&gt;git&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;push&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;origin&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;main&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;该脚本将public目录下的内容推送到 &amp;lt;username&amp;gt;.github.io仓库中。&lt;/p&gt;
+&lt;h3 id=&#34;参考内容&#34;&gt;参考内容：&lt;/h3&gt;
+&lt;p&gt;安装hugo:&lt;a href=&#34;https://gohugo.io/getting-started/quick-start/&#34;&gt;https://gohugo.io/getting-started/quick-start/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;安装主题:&lt;a href=&#34;https://github.com/reuixiy/hugo-theme-meme&#34;&gt;https://github.com/reuixiy/hugo-theme-meme&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;大体流程:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://www.waynerv.com/posts/setup-blog-with-hugo-and-github-pages/&#34;&gt;https://www.waynerv.com/posts/setup-blog-with-hugo-and-github-pages/&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://babifarm.com/post/2016/08/hosting-github-pages/&#34;&gt;https://babifarm.com/post/2016/08/hosting-github-pages/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;安装评论：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&#34;https://zhuanlan.zhihu.com/p/351055497&#34;&gt;https://zhuanlan.zhihu.com/p/351055497&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;https://cloud.tencent.com/developer/article/1787522?from=article.detail.1834230&#34;&gt;https://cloud.tencent.com/developer/article/1787522?from=article.detail.1834230&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/%E6%B5%81%E7%A8%8B%E5%B1%95%E7%A4%BA/">流程展示</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/hugo/">Hugo</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>Hello World！ 你好 世界！</title>
@@ -42,6 +208,137 @@
 &lt;p&gt;&lt;img src=&#34;testimg.jpeg&#34; alt=&#34;testimg&#34;&gt;&lt;/p&gt;
 &lt;center&gt;测试图片标题-图片来自网络&lt;/center&gt;
 </description>
+                
+                
+                
+                
+                
+                    
+                        
+                    
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>Raft算法研究现状</title>
+                <link>http://longchuanzheng.github.io/posts/raft/raft/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/raft/raft/</guid>
+                <pubDate>Sat, 12 Mar 2022 23:04:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;h1 id=&#34;01-序言&#34;&gt;01. 序言&lt;/h1&gt;
+&lt;p&gt;  正如标题所说，本系列将介绍Raft的一些研究成果，本系列内容在2020年就已经完成。当时在读研究生，主要研究方向是区块链应用。希望可以发论文的我将目光投向共识算法，首先接触到的当然是Paxos算法，花了大概一个月左右将Lamport的那篇《The part-time parliament》看了一遍，大师的论文功力的确深厚，不仅文字易懂并且连文末的数学推导也比我看过的其他大部分论文中的好懂。虽然网络上有很多Paxos算法的描述，但是我认为大部分一两页纸的描述并不能反应Paxos算法的精髓只能作为辅助参考。如果想从Paxos算法开始自己的共识算法研究的话非常推荐从该论文入手。&lt;/p&gt;
+&lt;p&gt;  看完论文后我的确能大概理解Paxos算法，但是该算法的易理解性让我感觉自己可能无法在短时间内对该算法进行什么后续研究。首先是Paxos算法中如何达成共识的流程并不清晰，隐藏在整个算法流程中。其次因此所带来的问题是代码描述可能更考量工程人员的代码能力。因此我继续寻找目标，而我第二个目标就是Raft算法。&lt;/p&gt;
+&lt;p&gt;  Raft(木筏)当年还有个很火的同名游戏。首先吸引到我的就是论文作者所强调的易理解性。 随着对Raft算法及其相关研究的调研不断深入，愈加重视易理解性在解决复杂问题中的作用。本系列将首先介绍共识算法的一些基础知识如复制状态机等以及原始的Raft算法；接着主要从“从节点读”操作、降低集群负载、提高集群可拓展性以及加速日志复制四个方向介绍相关改进研究进展。&lt;/p&gt;
+&lt;p&gt;  当然还有一些共识算法包括Viewstamped Replication(VR)算法，并没有被广泛使用，主要应用在Harp文件系统中。VR算法与Raft算法有一定相似性，值得注意的是VR算法中的轮询leader选举机制且所有节点均可积极发送消息，并支持在没有非易失性存储的情况下运行。Zab(Zookeeper Atomic Broadcast)是更晚出现的共识算法，应用在当今最流行的开源共识系统Apache Zookeeper协调服务中．Raft算法中集群成员更替的流程与Zab中所使用的较为相似．在Raft算法的设计中参考了上文所涉及算法的一些特性，在表1中列举了这些算法之间的关键异同点。这些算法将不会进行具体展开。&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;消息种类&lt;/th&gt;
+&lt;th&gt;日志连续性&lt;/th&gt;
+&lt;th&gt;有无独立提交阶段&lt;/th&gt;
+&lt;th&gt;选举触发条件&lt;/th&gt;
+&lt;th&gt;新任期状态确定&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Multi-Paxos&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;允许非连续&lt;/td&gt;
+&lt;td&gt;有&lt;/td&gt;
+&lt;td&gt;双向&lt;/td&gt;
+&lt;td&gt;领导者确认日志恢复结束点后，将状态同步到日志恢复结束点的状态&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Zab&lt;/td&gt;
+&lt;td&gt;10&lt;/td&gt;
+&lt;td&gt;要求日志具有连续性&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;VR&lt;/td&gt;
+&lt;td&gt;10&lt;/td&gt;
+&lt;td&gt;隐含在下一个请求中&lt;/td&gt;
+&lt;td&gt;单向超时&lt;/td&gt;
+&lt;td&gt;在半数以上副本进程日志序列中，选一个最新的日志作为初始状态&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Raft&lt;/td&gt;
+&lt;td&gt;4&lt;/td&gt;
+&lt;td&gt;新领导者自身状态&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;center&gt;表1 各共识算法异同总结&lt;/center&gt;
+&lt;h1 id=&#34;02相关知识&#34;&gt;02.相关知识&lt;/h1&gt;
+&lt;p&gt;  该部分主要介绍共识达成的条件、quorum这个概念以及复制状态机。&lt;/p&gt;
+&lt;h2 id=&#34;21-共识达成的条件&#34;&gt;2.1 共识达成的条件&lt;/h2&gt;
+&lt;p&gt;  对于共识达成的条件在网络上有相当多的讨论，可能无法得出统一结论，这里的内容来自于Ongaro D介绍Raft算法的的博士论文《Consensus: Bridging theory and practice》。主要包含三个条件一致性、合法性以及可终结性。&lt;/p&gt;
+&lt;p&gt;一致性(agreement)：所有正常的节点将得出相同的值;&lt;/p&gt;
+&lt;p&gt;合法性(validity)：被决定的值由一个正常的节点提出;&lt;/p&gt;
+&lt;p&gt;可终结性(termination)：所有正常节点最终将决定一个值。&lt;/p&gt;
+&lt;h2 id=&#34;22-quorum&#34;&gt;2.2 quorum&lt;/h2&gt;
+&lt;p&gt;  传统的共识算法需要在不存在拜占庭行为的异步系统中满足一致性和合法性，当失效的节点少于某阈值(quorum number)时可终结性也需要被满足，这个为了在集群中达成共识所需要的最少节点的集合称为quorum。Multi-Paxos、VR算法以及Raft算法在(&lt;em&gt;2f+1)&lt;em&gt;个节点的集群中quorum的大小为(&lt;em&gt;f+1)&lt;/em&gt;，即可以容忍&lt;/em&gt;f&lt;/em&gt;个节点同时失效(此时算法活性为&lt;em&gt;f&lt;/em&gt;)．由于任何两个quorum之间都有重叠节点，对某个quorum进行的操作在未来至少有一个quorum中有所标记,从而保证达成的共识不会被遗忘。&lt;/p&gt;
+&lt;h2 id=&#34;23-复制状态机&#34;&gt;2.3 复制状态机&lt;/h2&gt;
+&lt;p&gt;  共识算法通常在复制状态机的背景中提出，如图1所示，复制状态机通常包括共识模型、日志以及状态机。用户向复制状态机发送指令，指令被传递给共识模型(步骤1)，当共识模型决定将该命令在复制状态机集群内达成共识后将命令加入(apply)日志，并与其他复制状态机内的共识模型进行交互，将命令复制到其他日志中并保证命令在日志中排列顺序相同(步骤2)。状态机按日志顺序依次执行(commit)命令(步骤3)并将结果返回给用户(步骤4)。当初始状态一致，命令以及执行顺序一致，所有状态机最后的状态也将一致，从而保证集群内部的一致性。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;复制状态机示意图&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图1 复制状态机示意图&lt;/center&gt;
+&lt;p&gt;  用博主自己的话来说，quorum在很多关于共识算法的文章中都有出现，但是很难用中文去翻译，这个概念主要是指共识算法中达成一个共识最少需要保持统一的最小集群中节点的数量。如Raft算法中若集群总结点数为(&lt;em&gt;2f+1)&lt;em&gt;那么只有当(&lt;em&gt;f+1)&lt;em&gt;个节点都将某条数据进行记录，这条记录才能被成为该集群中的共识。从而还会引出算法活性这个概念，算法活性就是该集群能容忍同时下线节点的数量，Raft算法中为&lt;/em&gt;f&lt;/em&gt;，当&lt;/em&gt;f&lt;/em&gt;个节点下线后，由于quorum为(&lt;em&gt;f+1)&lt;/em&gt;，所以任何之前达成过的共识都会在剩下正常的节点中有记录。当然如果同时下线的节点数超过&lt;em&gt;f&lt;/em&gt;时，该集群就已经没有意义了。&lt;/p&gt;
+&lt;p&gt;  虽然复制状态机这个概念相当于废话，对于同样状态的状态机，收到相同的指令理论上当然应该还会到达另一个相同状态。但我认为它可以更好理解共识算法该如何利用。数据库的一条插入语句可以被认为数据库集群中需要达成的共识，在我为了找工作去看MySQL，Redis等数据库的集群实现时会体会到复制状态机这个概念。&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/%E7%A0%94%E7%A9%B6%E7%8E%B0%E7%8A%B6/">研究现状</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/raft/">Raft</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>dasdasasd</title>
+                <link>http://longchuanzheng.github.io/posts/hello-world/test/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hello-world/test/</guid>
+                <pubDate>Mon, 28 Feb 2022 21:42:51 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description></description>
                 
                 
                 

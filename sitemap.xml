@@ -2,20 +2,43 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://longchuanzheng.github.io/about/</loc>
-    <lastmod>2022-04-29T08:38:54+08:00</lastmod>
+    <loc>http://longchuanzheng.github.io/categories/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/tags/hugo/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/tags/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/hugo-use/hugo-use/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/%E6%B5%81%E7%A8%8B%E5%B1%95%E7%A4%BA/</loc>
+    <lastmod>2022-04-29T10:51:47+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/about/</loc>
     <lastmod>2022-04-29T08:38:54+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/hello-world/hello-world/</loc>
     <lastmod>2022-04-25T22:04:51+08:00</lastmod>
   </url><url>
-    <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2022-04-25T22:04:51+08:00</lastmod>
+    <loc>http://longchuanzheng.github.io/tags/raft/</loc>
+    <lastmod>2022-04-28T20:44:55+08:00</lastmod>
   </url><url>
-    <loc>http://longchuanzheng.github.io/categories/</loc>
+    <loc>http://longchuanzheng.github.io/posts/raft/raft/</loc>
+    <lastmod>2022-04-28T20:44:55+08:00</lastmod>
   </url><url>
-    <loc>http://longchuanzheng.github.io/tags/</loc>
+    <loc>http://longchuanzheng.github.io/categories/%E7%A0%94%E7%A9%B6%E7%8E%B0%E7%8A%B6/</loc>
+    <lastmod>2022-04-28T20:44:55+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/hello-world/test/</loc>
+    <lastmod>2022-04-29T10:50:26+08:00</lastmod>
   </url>
 </urlset>
