@@ -23,10 +23,53 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Fri, 29 Apr 2022 15:08:59 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 29 Apr 2022 19:41:25 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
+        
+            <item>
+                <title>hugo文章中date非法导致页面无法创建</title>
+                <link>http://longchuanzheng.github.io/posts/hugo/hugo-time/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugo/hugo-time/</guid>
+                <pubDate>Fri, 29 Apr 2022 19:32:29 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;问题描述：有些时候在content目录下写好文章后使用&lt;code&gt;hugo&lt;/code&gt;命令并不会在public目录下生成相应页面，甚至连图片都已经放在了public的相应目录。&lt;/p&gt;
+&lt;p&gt;原因分析：这可能时因为文章中的date设置在主机本地时间之后，比如如下情况，一般来说只要将date修改再使用&lt;code&gt;hugo&lt;/code&gt;命令就可以生成页面了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;image&#34;&gt;&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/%E9%9B%B6%E7%A2%8E%E9%97%AE%E9%A2%98/">零碎问题</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/hugo/">Hugo</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>hugo使用meme主题后的目录生成技巧</title>
