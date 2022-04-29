@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Fri, 29 Apr 2022 09:36:43 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 29 Apr 2022 09:38:41 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -57,15 +57,20 @@
         
             <item>
                 <title></title>
-                <link>http://longchuanzheng.github.io/posts/hugouse/%E4%BD%BF%E7%94%A8hugo%E5%8F%91%E5%B8%83%E5%8D%9A%E5%AE%A2%E7%9A%84%E7%AE%80%E5%8D%95%E6%B5%81%E7%A8%8B/</link>
-                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugouse/%E4%BD%BF%E7%94%A8hugo%E5%8F%91%E5%B8%83%E5%8D%9A%E5%AE%A2%E7%9A%84%E7%AE%80%E5%8D%95%E6%B5%81%E7%A8%8B/</guid>
+                <link>http://longchuanzheng.github.io/posts/hugouse/hugouse/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugouse/hugouse/</guid>
                 <pubDate>Mon, 01 Jan 0001 00:00:00 &#43;0000</pubDate>
                 
                     <author>zal42@outlook.com (Longchuanzheng)</author>
                 
                 <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
                 
-                    <description>&lt;p&gt;环境：win10&lt;/p&gt;
+                    <description>&lt;p&gt;title: &amp;quot;使用hugo发布博客的简单流程&amp;quot;
+date: 2022-04-29T23:04:05+08:00
+tags: [&amp;quot;Hugo&amp;quot;]
+categories: [&amp;quot;流程展示&amp;quot;]
+draft: false&lt;/p&gt;
+&lt;p&gt;环境：win10&lt;/p&gt;
 &lt;h3 id=&#34;1-安装-hugoextended扩展版&#34;&gt;1. 安装 Hugo（extended扩展版）&lt;/h3&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ scoop install hugo-extended
 &lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;2-生成hugo站点在目标目录执行&#34;&gt;2. 生成Hugo站点，在目标目录执行：&lt;/h3&gt;
