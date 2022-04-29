@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
+    <title type="text">My way, the end is...</title>
+    <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
+    <updated>2022-04-29T10:15:48&#43;08:00</updated>
+    <id>http://longchuanzheng.github.io/</id>
+    <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
+    <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
+    <author>
+            <name>Longchuanzheng</name>
+            <uri>http://longchuanzheng.github.io/</uri>
+            
+                <email>zal42@outlook.com</email>
+            </author>
+    <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
+    <generator uri="https://gohugo.io/" version="0.94.1">Hugo</generator>
+        <entry>
+            <title type="text">Hello World！ 你好 世界！</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hello-world/hello-world/" />
+            <id>http://longchuanzheng.github.io/posts/hello-world/hello-world/</id>
+            <updated>2022-04-25T22:04:51&#43;08:00</updated>
+            <published>2022-03-12T23:04:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">Hello World！ 你好 世界！ 测试图片标题-图片来自网络</summary>
+            
+                <content type="html">&lt;p&gt;Hello World！ 你好 世界！&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;testimg.jpeg&#34; alt=&#34;testimg&#34;&gt;&lt;/p&gt;
+&lt;center&gt;测试图片标题-图片来自网络&lt;/center&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                
+                    
+                
+            
+        </entry>
+    
+</feed>
