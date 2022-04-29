@@ -23,40 +23,136 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Fri, 29 Apr 2022 14:52:59 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 29 Apr 2022 15:08:59 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
         
             <item>
+                <title>hugo使用meme主题后的目录生成技巧</title>
+                <link>http://longchuanzheng.github.io/posts/hugo/hugo-list/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugo/hugo-list/</guid>
+                <pubDate>Fri, 29 Apr 2022 15:05:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;虽然我认为Typora自带的目录非常方便，但是它没法再meme中显示出来。而meme的config中有设置目录的字段：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;######################################&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 文章目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 是否开启（全局设置）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nv&#34;&gt;enableTOC&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 说明：文章的 Front Matter 中的 `toc`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;#      的优先级高于此处&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 是否显示目录标题&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nv&#34;&gt;displayTOCTitle&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 是否显示数字（全局设置）&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nv&#34;&gt;displayTOCNum&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 说明：文章的 Front Matter 中的 `tocNum`&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;#      的优先级高于此处&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;c1&#34;&gt;# 是否链接文章的分节标题到目录&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;    &lt;span class=&#34;nv&#34;&gt;linkHeadingsToTOC&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;但是使用起来需要将文章的最顶级标题设为“二级标题”，次顶级设为“三级标题”以此类推才可以正常使用。由于自带序号因此原文章标题中的序号也需要去掉。
+如下代码会显示出本文顶部的目录效果：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;##标题1
+
+###标题1.1
+
+####标题1.1.1
+
+##标题2
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;标题1&#34;&gt;标题1&lt;/h2&gt;
+&lt;h3 id=&#34;标题11&#34;&gt;标题1.1&lt;/h3&gt;
+&lt;h4 id=&#34;标题111&#34;&gt;标题1.1.1&lt;/h4&gt;
+&lt;h2 id=&#34;标题2&#34;&gt;标题2&lt;/h2&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/%E9%9B%B6%E7%A2%8E%E9%97%AE%E9%A2%98/">零碎问题</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/hugo/">Hugo</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
                 <title>使用hugo搭建博客的简单流程-win10</title>
-                <link>http://longchuanzheng.github.io/posts/hugo-use/hugo-use/</link>
-                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugo-use/hugo-use/</guid>
+                <link>http://longchuanzheng.github.io/posts/hugo/hugo-use/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/hugo/hugo-use/</guid>
                 <pubDate>Fri, 29 Apr 2022 10:04:05 &#43;0800</pubDate>
                 
                     <author>zal42@outlook.com (Longchuanzheng)</author>
                 
                 <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
                 
-                    <description>&lt;h3 id=&#34;1-安装-hugoextended扩展版&#34;&gt;1. 安装 Hugo（extended扩展版）&lt;/h3&gt;
+                    <description>&lt;h2 id=&#34;安装-hugoextended扩展版&#34;&gt;安装 Hugo（extended扩展版）&lt;/h2&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ scoop install hugo-extended
-&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;2-生成hugo站点在目标目录执行&#34;&gt;2. 生成Hugo站点，在目标目录执行：&lt;/h3&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;生成hugo站点在目标目录执行&#34;&gt;生成Hugo站点，在目标目录执行：&lt;/h2&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ hugo new site hugo-blog
 ~ $ cd hugo-blog
-&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;3-安装主题&#34;&gt;3. 安装主题&lt;/h3&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;安装主题&#34;&gt;安装主题&lt;/h2&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ git init
 ~/hugo-blog $ git submodule add --depth 1 https://github.com/reuixiy/hugo-theme-meme.git themes/meme
-&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;31-使用主题的config替换hugo的config文件&#34;&gt;3.1 使用主题的config替换hugo的config文件&lt;/h4&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;使用主题的config替换hugo的config文件&#34;&gt;使用主题的config替换hugo的config文件&lt;/h3&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ rm config.toml &amp;amp;&amp;amp; cp themes/meme/config-examples/zh-cn/config.toml config.toml
-&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;32-添加一个页面于文章&#34;&gt;3.2 添加一个页面于文章&lt;/h4&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;添加一个页面于文章&#34;&gt;添加一个页面于文章&lt;/h3&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ hugo new &amp;#34;posts/hello-world.md&amp;#34;
 ~/hugo-blog $ hugo new &amp;#34;about/_index.md&amp;#34;
-&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;33-测试安装结果&#34;&gt;3.3 测试安装结果&lt;/h4&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;测试安装结果&#34;&gt;测试安装结果&lt;/h3&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ hugo server -D
-&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;4-通过github发布&#34;&gt;4. 通过github发布&lt;/h3&gt;
-&lt;h4 id=&#34;41-在创建github个人主页仓库&#34;&gt;4.1 在创建github个人主页仓库&lt;/h4&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;通过github发布&#34;&gt;通过github发布&lt;/h2&gt;
+&lt;h3 id=&#34;在创建github个人主页仓库&#34;&gt;在创建github个人主页仓库&lt;/h3&gt;
 &lt;p&gt;仓库名称为 &amp;lt;username&amp;gt;.github.io （public）&lt;/p&gt;
-&lt;h4 id=&#34;42-在github创建hugo项目仓库用于文章发布&#34;&gt;4.2 在github创建hugo项目仓库用于文章发布&lt;/h4&gt;
+&lt;h3 id=&#34;在github创建hugo项目仓库用于文章发布&#34;&gt;在github创建hugo项目仓库用于文章发布&lt;/h3&gt;
 &lt;p&gt;与本地hugo目录绑定(private)即可&lt;/p&gt;
 &lt;p&gt;将刚刚创建的hugo-blog下除了.git文件以外的文件放入hugo仓库的本地目录&lt;/p&gt;
 &lt;p&gt;在hugo目录下：&lt;/p&gt;
@@ -68,7 +164,7 @@
 &lt;p&gt;运行&lt;/p&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~/hugo-blog $ git submodule add -b main https://github.com/&amp;lt;USERNAME&amp;gt;/&amp;lt;USERNAME&amp;gt;.github.io.git public
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;将hugo目录中的public目录与&amp;lt;username&amp;gt;.github.io的public目录绑定（这里建议使用SSH地址）&lt;/p&gt;
-&lt;h3 id=&#34;5-添加评论模块&#34;&gt;5. 添加评论模块&lt;/h3&gt;
+&lt;h2 id=&#34;添加评论模块&#34;&gt;添加评论模块&lt;/h2&gt;
 &lt;p&gt;利用utterances项目，将某个public仓库的issue作为评论区。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;01.png&#34; alt=&#34;image&#34;&gt;&lt;/p&gt;
 &lt;p&gt;修改config文件&lt;/p&gt;
@@ -88,7 +184,7 @@
     utterancesThemeDark = &amp;#34;photon-dark&amp;#34;
     utterancesLabel = &amp;#34;comment&amp;#34;
     # 说明：https://utteranc.es/
-&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;6-修改页面&#34;&gt;6. 修改页面&lt;/h3&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;修改页面&#34;&gt;修改页面&lt;/h2&gt;
 &lt;p&gt;在hugo目录的content目录下创建新的页面&lt;/p&gt;
 &lt;p&gt;修改config文件中的必要信息&lt;/p&gt;
 &lt;p&gt;运行py脚本更新public目录中的内容将其push到 &amp;lt;username&amp;gt;.github.io中&lt;/p&gt;
