@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2023-02-14T22:15:45&#43;08:00</updated>
+    <updated>2023-02-15T22:33:15&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,7 +20,7 @@
             <title type="text">hugo文章中date非法导致页面无法创建</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo/hugo-time/" />
             <id>http://longchuanzheng.github.io/posts/hugo/hugo-time/</id>
-            <updated>2022-04-29T19:41:16&#43;08:00</updated>
+            <updated>2023-02-15T22:00:50&#43;08:00</updated>
             <published>2022-04-29T19:32:29&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -44,7 +44,7 @@
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/categories/%E9%9B%B6%E7%A2%8E%E9%97%AE%E9%A2%98/" term="零碎问题" label="零碎问题" />
+                                <category scheme="http://longchuanzheng.github.io/categories/hugo/" term="Hugo" label="Hugo" />
                             
                         
                     
@@ -54,7 +54,7 @@
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/tags/hugo/" term="Hugo" label="Hugo" />
+                                <category scheme="http://longchuanzheng.github.io/tags/exp/" term="exp" label="exp" />
                             
                         
                     
@@ -66,7 +66,7 @@
             <title type="text">hugo使用meme主题后的目录生成技巧</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo/hugo-list/" />
             <id>http://longchuanzheng.github.io/posts/hugo/hugo-list/</id>
-            <updated>2022-04-29T15:08:52&#43;08:00</updated>
+            <updated>2023-02-15T22:01:04&#43;08:00</updated>
             <published>2022-04-29T15:05:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -143,7 +143,7 @@
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/categories/%E9%9B%B6%E7%A2%8E%E9%97%AE%E9%A2%98/" term="零碎问题" label="零碎问题" />
+                                <category scheme="http://longchuanzheng.github.io/categories/hugo/" term="Hugo" label="Hugo" />
                             
                         
                     
@@ -153,7 +153,7 @@
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/tags/hugo/" term="Hugo" label="Hugo" />
+                                <category scheme="http://longchuanzheng.github.io/tags/exp/" term="exp" label="exp" />
                             
                         
                     
@@ -165,7 +165,7 @@
             <title type="text">使用hugo搭建博客的简单流程-win10</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo/hugo-use/" />
             <id>http://longchuanzheng.github.io/posts/hugo/hugo-use/</id>
-            <updated>2022-04-29T14:57:29&#43;08:00</updated>
+            <updated>2023-02-15T22:00:35&#43;08:00</updated>
             <published>2022-04-29T10:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -310,7 +310,7 @@
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/categories/%E6%B5%81%E7%A8%8B%E5%B1%95%E7%A4%BA/" term="流程展示" label="流程展示" />
+                                <category scheme="http://longchuanzheng.github.io/categories/hugo/" term="Hugo" label="Hugo" />
                             
                         
                     
@@ -320,7 +320,7 @@
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/tags/hugo/" term="Hugo" label="Hugo" />
+                                <category scheme="http://longchuanzheng.github.io/tags/exp/" term="exp" label="exp" />
                             
                         
                     
@@ -332,7 +332,7 @@
             <title type="text">Hello World！ 你好 世界！</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hello-world/hello-world/" />
             <id>http://longchuanzheng.github.io/posts/hello-world/hello-world/</id>
-            <updated>2022-04-25T22:04:51&#43;08:00</updated>
+            <updated>2023-02-15T22:01:44&#43;08:00</updated>
             <published>2022-03-12T23:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -362,7 +362,7 @@
             <title type="text">Raft算法研究现状</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/raft/raft/" />
             <id>http://longchuanzheng.github.io/posts/raft/raft/</id>
-            <updated>2023-02-13T22:57:03&#43;08:00</updated>
+            <updated>2023-02-15T22:32:55&#43;08:00</updated>
             <published>2022-03-12T23:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -475,22 +475,41 @@ v_r \ne v_c \land t_c \lt t_r
 $$&lt;/p&gt;
 &lt;center&gt;该公式表示当读取的值与以应用的值不同且应用发生在读操作之前时出现异常&lt;/center&gt;
 &lt;p&gt;  通过控制逻辑用户灵活设定读操作的规定延时和异常率，当延时较低则可以通过将更多读请求交给 leader 来获得更低的异常率，而效率无法满足时则牺牲可靠性提高效率，从而更灵活的达到规定的性能。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;4.png&#34; alt=&#34;反馈处理模型结构&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图4 反馈处理模型结构&lt;/center&gt;
 &lt;h2 id=&#34;降低集群负载&#34;&gt;降低集群负载&lt;/h2&gt;
 &lt;p&gt;  Raft 算法为了在 &lt;em&gt;N=(2f+1)&lt;/em&gt; 个节点中容忍 &lt;em&gt;f&lt;/em&gt; 个节点的失效，每个日志项至少需要在集群中 （*f+&lt;em&gt;1&lt;/em&gt;）*个节点中存放．集群规模和数据规模增大时，这部分的花费将是集群负载提高的一个主要原因。因此不少研究尝试降低集群负载。&lt;/p&gt;
 &lt;h3 id=&#34;基于纠删码的craft算法&#34;&gt;基于纠删码的CRaft算法&lt;/h3&gt;
 &lt;p&gt;  在CRaft算法&lt;sup id=&#34;fnref:10&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:10&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;10&lt;/a&gt;&lt;/sup&gt;中，使用了一种经典的纠删码--里德所罗门编码(Reed-Solomon codes)，RS-code可以从原数据中生成 &lt;em&gt;k&lt;/em&gt; 个数据块和 &lt;em&gt;m&lt;/em&gt; 个校验块，只要通过这 &lt;em&gt;(k+m)&lt;/em&gt; 个块中的 &lt;em&gt;k&lt;/em&gt; 个块就可以恢复出原始数据。需要注意的是如果单纯的将 follwer 中的日志实体都替换为编码块，则无法保证和原 Raft 算法拥有相同的活性。为了能和原始 Raft 算法保持相同的活性 CRaft 中使用了纠删码复制与原始数据复制相结合的方式．在此假设集群中有 &lt;em&gt;N=(2f+1)&lt;/em&gt; 个节点，算法需要能够容忍 &lt;em&gt;f&lt;/em&gt; 个节点的失效。&lt;/p&gt;
-&lt;p&gt;  纠删码复制使用 &lt;em&gt;(k,m)&lt;/em&gt;-RS code*(k+m=N)* 对原日志项进行处理，如图4所示 index 和 term 应该提前剥离出并添加在处理过的 (&lt;em&gt;f+k)&lt;/em&gt; 个数据块的头部。Leader 将数据块分别发给对应的 follower，当收到至少 (&lt;em&gt;f+k)&lt;/em&gt; 个回复后，leader 将该日志实体应用(暗示当活节点数少于 (&lt;em&gt;f+k)&lt;/em&gt; 时无法使用纠删码复制)，因为在 (&lt;em&gt;f+1)&lt;/em&gt; 个节点中至少有 &lt;em&gt;k&lt;/em&gt; 个节点拥有该日志项的数据块，所以任何拥有编码后数据块的 follower 可以正常发起选举并通过其他节点恢复出完整日志项。而当没有 &lt;em&gt;(f+k)&lt;/em&gt; 个节点在线时纠删码复制无法完成，leader 节点需要使用 Raft 算法中使用的日志项复制方式。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;4.png&#34; alt=&#34;CRaft算法中日志项处理流程&#34;&gt;&lt;/p&gt;
-&lt;center&gt;图4 CRaft算法中日志项处理流程&lt;/center&gt;
+&lt;p&gt;  纠删码复制使用 &lt;em&gt;(k,m)&lt;/em&gt;-RS code*(k+m=N)* 对原日志项进行处理，如图5所示 index 和 term 应该提前剥离出并添加在处理过的 (&lt;em&gt;f+k)&lt;/em&gt; 个数据块的头部。Leader 将数据块分别发给对应的 follower，当收到至少 (&lt;em&gt;f+k)&lt;/em&gt; 个回复后，leader 将该日志实体应用(暗示当活节点数少于 (&lt;em&gt;f+k)&lt;/em&gt; 时无法使用纠删码复制)，因为在 (&lt;em&gt;f+1)&lt;/em&gt; 个节点中至少有 &lt;em&gt;k&lt;/em&gt; 个节点拥有该日志项的数据块，所以任何拥有编码后数据块的 follower 可以正常发起选举并通过其他节点恢复出完整日志项。而当没有 &lt;em&gt;(f+k)&lt;/em&gt; 个节点在线时纠删码复制无法完成，leader 节点需要使用 Raft 算法中使用的日志项复制方式。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;5.png&#34; alt=&#34;CRaft算法中日志项处理流程&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图5 CRaft算法中日志项处理流程&lt;/center&gt;
 &lt;p&gt;  值得注意的是，新 leader 选出后需要先标记出日志中未应用的日志项编码块，并向 follower 节点广播请求得到相应日志项编码块，对于每个日志项如果收到 &lt;em&gt;k&lt;/em&gt; 个编码块或一个完整日志项即可恢复，等待所有未应用日志项都恢复成完整日志项后再按顺序应用，当有日志项无法恢复时将其和之后所有日志项(即使是完全的)从日志中删除。恢复或删除完成后额外步骤完成，显然 leader 的额外步骤进行了日志项删除，破坏了Raft算法中的日志只增原则，因此在&lt;sup id=&#34;fnref:10&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:10&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;10&lt;/a&gt;&lt;/sup&gt;中还证明这种破坏并不会影响安全性。&lt;/p&gt;
 &lt;p&gt;  CRaft算法通过 &lt;em&gt;(k,m)&lt;/em&gt;-RS code 编码日志项，当使用纠删码复制时网络和存储负载都降为原来的 &lt;em&gt;1/k&lt;/em&gt;，因此与原 Raft 相比可以获得更优的写时延和吞吐量，且拥有与 Raft 算法同等的活性．但由于需要恢复数据块，CRaft 读操作延迟大于 Raft，但重复读取同一数据可以让延迟相对降低．&lt;/p&gt;
 &lt;h3 id=&#34;添加轻量化节点&#34;&gt;添加轻量化节点&lt;/h3&gt;
 &lt;h4 id=&#34;pirogue算法&#34;&gt;Pirogue算法&lt;/h4&gt;
 &lt;p&gt;  Pirogue算法&lt;sup id=&#34;fnref:11&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:11&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;11&lt;/a&gt;&lt;/sup&gt;根据集群中存活节点数以及节点状态，动态的维持quorum。通过“动态投票”以及其改进“动态线性投票”的方法，让quroum随着集群中现存节点数量伸缩变化。该方法可以在 &lt;em&gt;N=&lt;/em&gt;(&lt;em&gt;f+2)&lt;/em&gt; 个节点容忍 &lt;em&gt;f&lt;/em&gt; 个节点失效．并加入仅包含最有限数据的轻量化节点见证者(witness)，这种节点仅参与选举投票、日志复制过程而不成为 candidate 。使用观察者节点替换一些完全节点能使集群获得与原先相近的可用性。&lt;/p&gt;
-&lt;h4 id=&#34;suspend节点&#34;&gt;suspend节点&lt;/h4&gt;
+&lt;h4 id=&#34;suspend节点&#34;&gt;Suspend节点&lt;/h4&gt;
 &lt;p&gt;  由于集群中只需要半数以上的节点在线就可以运行，基于Pirogue算法，Nakagawa等向Raft算法中引入suspend节点&lt;sup id=&#34;fnref:12&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:12&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;12&lt;/a&gt;&lt;/sup&gt;。根据节点失效概率的经验选出部分节点作为suspend节点，susupend节点开始处于挂起状态，leader通过心跳消息统计现存节点数，当集群内现存节点数量过少无法达成共识，leader计算所需suspend节点数，选择相应suspend节点发送苏醒信号，同步日志状态，从而开始日志复制步骤。&lt;/p&gt;
 &lt;h2 id=&#34;提高集群可拓展性&#34;&gt;提高集群可拓展性&lt;/h2&gt;
+&lt;h3 id=&#34;kraft算法&#34;&gt;KRaft算法&lt;/h3&gt;
+&lt;p&gt;  随着Raft算法的广泛使用，更大的集群规模是可以预见的发展方向。虽然Raft算法使用随机选举超时机制，但节点数量过多时仍然可能出现投票分散的情况。引入Kademlia协议&lt;sup id=&#34;fnref:13&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:13&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;13&lt;/a&gt;&lt;/sup&gt;，修改leader选举和日志复制流程，可以解决当节点数量较多时leader选举效率低下的问题。&lt;/p&gt;
+&lt;p&gt;  Kademlia协议是一种基于异或运算的分布式哈希表(DHT)，可以高效的实现分布式存储与路由．Kademlia协议中节点通过维持路由表(K桶)来维持与其他节点之间的联系， K桶在网络层动态维持，因此增加节点并不会对集群造成太多负担。&lt;/p&gt;
+&lt;p&gt;  KRaft算法在集群中维持一个以leader为中心的K桶称为“表”，通过与leader的最后联系的时间顺序与id距离为依据，不断更新K桶中节点。并保证leader节点失效后K桶中节点日志状态相同．当leader失效后K桶中节点均可转变为candidate，candidate根据当前时间生成一个随机数&lt;em&gt;I&lt;/em&gt;(时间戳+随机数)，并在&lt;em&gt;I&lt;/em&gt;时刻之后开始选举。产生最小随机数的candidate最有可能被选为新的leader．新leader出现后以其为中心更新K桶(表)。&lt;/p&gt;
+&lt;p&gt;  由于K桶的更新可以保证在线时间较长的节点有更大的可能性保持在K桶中。所以KRaft算法选出的leader节点在一定程度上更加稳定。采用随机数&lt;em&gt;I&lt;/em&gt;的机制，也不会完全破坏选举的随机性。动态设置适合集群节点数量的K桶规模，保证了在庞大节点数量下不完全破坏选举稳定性和随机性并大大提升选举效率。而且K桶中节点积极更新，基于Kademlia协议的思想，使桶中节点承担部分日志项复制的职责，来减轻leader节点的负载。当leader收到所有表中节点的AppendEntries回复后这些节点就有权力去传播当前日志项。从而使日志复制的过程变为多节点并行，提高日志复制速率．在文中&lt;sup id=&#34;fnref:13&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:13&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;13&lt;/a&gt;&lt;/sup&gt;32个节点的测试中，leader选举时常缩短短了67%，吞吐量提高了41%．&lt;/p&gt;
+&lt;h3 id=&#34;multi-raft&#34;&gt;Multi-Raft&lt;/h3&gt;
+&lt;p&gt;  在Multi-Raft&lt;sup id=&#34;fnref:14&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:14&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;14&lt;/a&gt;&lt;/sup&gt;中通过多组Raft集群，将用户的请求分给不同的集群。通过两阶段提交在集群之间保持强一致性。虽然Multi-Raft可以提高吞吐量，但是每次扩容都会多消耗一倍的资源。在文献&lt;sup id=&#34;fnref:15&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:15&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;15&lt;/a&gt;&lt;/sup&gt;提出的Geo-Raft中通过将集群分块来提高集群规模。&lt;/p&gt;
+&lt;p&gt;  Geo-Raft算法中还增添了 secretaries(秘书)节点与 observers(观察者)节点。秘书节点协助leader分担的日志复制任务。观察者节点服务 follower 帮助其处理读请求 如图6所示，Geo-Raft将集群分为 &lt;em&gt;n&lt;/em&gt; 子块，不同子块中秘书节点和观察者节点数量不一。唯一的 leader 通过秘书节点向其他块中的 follower 复制日志项。而读请求被分配给 follower 节点或观察者节点。通过上述机制 leader 节点可以管理数量众多的 follower 节点。秘书节点和观察者节点都属于无状态节点，仅分担负载可以随意替换，因此对算法安全性不造成影响。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;6.png&#34; alt=&#34;Geo-Raft中节点组织结构&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图6 Geo-Raft中节点组织结构&lt;/center&gt;
+&lt;p&gt;  值得一提的是，云计算市场的激烈竞争，某些容易失效的云计算资源如亚马逊的AWS EC2云服务器的价格是特定按需服务器的十分之一。在Geo-Raft算法中 leader 节点和 follower 节点选用按需配置的稳定服务器，而秘书节点与观察者节点则根据市场价格选择相对便宜且稳定性不高的云服务器。因为扩展方式以及资源选用的灵活性，在实现中Geo-Raft总成本为Mulit-Raft的15%。且连续提供6个月的键值对存储服务在谷歌集群追踪测试(Google cluster trace[46])中不出现数据丢失或冲突。&lt;/p&gt;
 &lt;h2 id=&#34;加速日志复制&#34;&gt;加速日志复制&lt;/h2&gt;
+&lt;p&gt;  在Raft算法具体实现中，日志复制的时延是影响系统性能的一大因素，硬盘的I/O时间是日志复制快慢的主要影响因子。在Batching优化&lt;sup id=&#34;fnref:16&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:16&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;16&lt;/a&gt;&lt;/sup&gt;的基础上通过优化日志复制过程中的数据存储策略提出了FRaft算法。&lt;/p&gt;
+&lt;h3 id=&#34;fraft算法&#34;&gt;FRaft算法&lt;/h3&gt;
+&lt;p&gt;  如图7所示，通过 Batching 优化，leader 将多个日志项作为一个任务打包发送给 follower。follower 通过处理队列来接受 leader 发出的任务，首先将头部的任务加入到特殊的缓冲区 W 中，其次将这个任务中的最后一个日志项的 index 压入等待队列中，并将 W 中的日志序列加入硬盘中并应用，最后将涉及到的等待队列中的 index 回复 leader．通过缓冲区 W 一次处理多个日志序列减少了处理队列中的任务的等待时间并降低了硬盘 I/O次 数。然而这些操作可能导致在共识还没达成的情况下，某些日志实体在 follower 中已经应用的情况。将已应用日志按顺序加入发布池(pubilshpool)。根据 leader 发送的后续 AppendEntries 在共识达成后将日志项释放，从而可以根据发布池中数据对以应用日志项进行撤销．测试证明 FRaft 在吞吐量、节点恢复时间、工作负载等指标上都有提升，且并不会因为强一致性与可用性损失太多性能。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;7.png&#34; alt=&#34;FRaft算法中日志项应用流程&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图7 FRaft算法中日志项应用流程&lt;/center&gt;
+&lt;p&gt; 还有Guo等提出了基于特殊标记日志实体的日志恢复算法&lt;sup id=&#34;fnref:17&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:17&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;17&lt;/a&gt;&lt;/sup&gt;．通过特殊标记将需要恢复的节点中的日志与leader中不一致部分整体删除，不需要逐个日志项进行检测，减少交互次数。提高日志复制效率。&lt;/p&gt;
 &lt;section class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
 &lt;hr&gt;
 &lt;ol&gt;
@@ -530,6 +549,21 @@ $$&lt;/p&gt;
 &lt;li id=&#34;fn:12&#34; role=&#34;doc-endnote&#34;&gt;
 &lt;p&gt;Nakagawa T, Hayashibara N. Energy efficient raft consensus algorithm[C]//International Conference on Network-Based Information Systems. Cham, Switzerland: Springer, 2017: 719-727.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:12&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
+&lt;li id=&#34;fn:13&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Maymounkov P, Mazieres D. Kademlia: A peer-to-peer information system based on the xor metric[C]//International Workshop on Peer-to-Peer Systems. Heidelberg, Berlin, Germany: Springer, 2002: 53-65.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:13&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:14&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Howard H, Schwarzkopf M, Madhavapeddy A, et al. Raft refloated: Do we have consensus?[J]. ACM SIGOPS Operating Systems Review, 2015, 49(1): 12-21.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:14&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:15&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Xu Z, Stewart C, Huang J. Elastic, geo-distributed RAFT[C]//2019 IEEE/ACM 27th International Symposium on Quality of Service (IWQoS). Piscataway, NJ: IEEE, 2019: 1-9.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:15&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:16&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Friedman R, Van Renesse R. Packing messages as a tool for boosting the performance of total ordering protocols[C]//Proceedings. The Sixth IEEE International Symposium on High Performance Distributed Computing. NJ: IEEE, 1997: 233-242.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:16&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li id=&#34;fn:17&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;p&gt;Guo J, Wang J, Cai P, et al. Fast follower recovery for state machine replication[C]//Asia-Pacific Web (APWeb) and Web-Age Information Management (WAIM) Joint Conference on Web and Big Data. Cham, Switzerland: Springer, 2017: 311-319.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:17&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
 &lt;/ol&gt;
 &lt;/section&gt;
 </content>
@@ -544,7 +578,7 @@ $$&lt;/p&gt;
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/categories/%E7%A0%94%E7%A9%B6%E7%8E%B0%E7%8A%B6/" term="研究现状" label="研究现状" />
+                                <category scheme="http://longchuanzheng.github.io/categories/raft/" term="Raft" label="Raft" />
                             
                         
                     
@@ -554,7 +588,7 @@ $$&lt;/p&gt;
                             
                             
                             
-                                <category scheme="http://longchuanzheng.github.io/tags/raft/" term="Raft" label="Raft" />
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
                             
                         
                     
