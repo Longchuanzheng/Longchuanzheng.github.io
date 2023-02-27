@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2023-02-27T13:54:57&#43;08:00</updated>
+    <updated>2023-02-27T13:58:04&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,7 +20,7 @@
             <title type="text">Kubevirt nodeController 流程分析</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/nodecontroller/" />
             <id>http://longchuanzheng.github.io/posts/kubevirt/nodecontroller/</id>
-            <updated>2023-02-27T13:46:03&#43;08:00</updated>
+            <updated>2023-02-27T13:58:01&#43;08:00</updated>
             <published>2023-02-26T10:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -30,7 +30,7 @@
             <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">node controller 逻辑并不多，主要将 handle Pod 不正常且 ds 正常的 节点上的所有 pod 不正常但处于 running 状态下的 vmi 置为……</summary>
             
                 <content type="html">&lt;p&gt;node controller 逻辑并不多，主要将 handle Pod 不正常且 ds 正常的 节点上的所有 pod 不正常但处于 running 状态下的 vmi 置为 failed 状态。这里的node 可以理解成节点上的 handle pod，有 nodeInformer 和 vmiInformer。相关的添加、更新、删除会将相关node 加入处理队列。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;nodeController.png&#34; alt=&#34;nodeController 总体流程&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;nodeController 总体流程&#34;&gt;&lt;/p&gt;
 &lt;center&gt;图1 nodeController 总体流程&lt;/center&gt;
 &lt;p&gt;代码入口在pkg/virt-controller/watch/node.go execute&lt;/p&gt;
 &lt;h2 id=&#34;获得节点上正常-pod-列表与-vmi-列表&#34;&gt;获得节点上正常 Pod 列表与 vmi 列表&lt;/h2&gt;

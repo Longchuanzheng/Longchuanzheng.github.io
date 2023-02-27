@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Mon, 27 Feb 2023 13:54:57 &#43;0800</lastBuildDate>
+        <lastBuildDate>Mon, 27 Feb 2023 13:58:04 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -39,7 +39,7 @@
                 <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
                 
                     <description>&lt;p&gt;node controller 逻辑并不多，主要将 handle Pod 不正常且 ds 正常的 节点上的所有 pod 不正常但处于 running 状态下的 vmi 置为 failed 状态。这里的node 可以理解成节点上的 handle pod，有 nodeInformer 和 vmiInformer。相关的添加、更新、删除会将相关node 加入处理队列。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;nodeController.png&#34; alt=&#34;nodeController 总体流程&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;nodeController 总体流程&#34;&gt;&lt;/p&gt;
 &lt;center&gt;图1 nodeController 总体流程&lt;/center&gt;
 &lt;p&gt;代码入口在pkg/virt-controller/watch/node.go execute&lt;/p&gt;
 &lt;h2 id=&#34;获得节点上正常-pod-列表与-vmi-列表&#34;&gt;获得节点上正常 Pod 列表与 vmi 列表&lt;/h2&gt;
