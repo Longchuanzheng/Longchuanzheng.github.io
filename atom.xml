@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2023-02-21T21:24:15&#43;08:00</updated>
+    <updated>2023-02-27T12:22:23&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -15,12 +15,221 @@
                 <email>zal42@outlook.com</email>
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
-    <generator uri="https://gohugo.io/" version="0.94.1">Hugo</generator>
+    <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">Kubevirt nodeController 流程分析</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/nodecontroller/nodecontroller/" />
+            <id>http://longchuanzheng.github.io/posts/kubevirt/nodecontroller/nodecontroller/</id>
+            <updated>2023-02-27T11:43:23&#43;08:00</updated>
+            <published>2023-02-27T10:04:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">node controller 逻辑并不多，主要将 handle Pod 不正常且 ds 正常的 节点上的所有 pod 不正常但处于 running 状态下的 vmi 置为……</summary>
+            
+                <content type="html">&lt;p&gt;node controller 逻辑并不多，主要将 handle Pod 不正常且 ds 正常的 节点上的所有 pod 不正常但处于 running 状态下的 vmi 置为 failed 状态。这里的node 可以理解成节点上的 handle pod，有 nodeInformer 和 vmiInformer。相关的添加、更新、删除会将相关node 加入处理队列。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;nodeController.png&#34; alt=&#34;nodeController 总体流程&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图1 nodeController 总体流程&lt;/center&gt;
+&lt;p&gt;代码入口在pkg/virt-controller/watch/node.go execute&lt;/p&gt;
+&lt;h2 id=&#34;获得节点上正常-pod-列表与-vmi-列表&#34;&gt;获得节点上正常 Pod 列表与 vmi 列表&lt;/h2&gt;
+&lt;p&gt;从队列中取出 node obj 后，首先判断 node.Annotations 的 VirtHandlerHeartbeat 是否过期应该使virthandle 定期反馈的，若已经过期则unresponsive 为 true 并进入后续逻辑，若否则设定 period 将该 node 重新加入处理队列。&lt;/p&gt;
+&lt;p&gt;对于 unresponsive 的 node，首先确定 node 是否被打上了NodeSchedulable = true的 label 若否则先 patch 将这个标签置为 true。接着进入 checkNodeForOrphanedAndErroredVMIs 处理相关 pod 和 vmi。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;20
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;21
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;22
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;23
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;24
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;25
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;26
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;27
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;28
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;29
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;30
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;31
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;32
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;33
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;34
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;35
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;36
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;37
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;38
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;39
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-golang&#34; data-lang=&#34;golang&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;kd&#34;&gt;func&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;c&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;NodeController&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;execute&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;key&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;string&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;kt&#34;&gt;error&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;log&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;DefaultLogger&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;()&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;obj&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;nodeExists&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;c&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;nodeInformer&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;GetStore&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;().&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;GetByKey&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;key&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;!=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;kd&#34;&gt;var&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;v1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Node&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;nodeExists&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;obj&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;*&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;v1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;Object&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;else&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;Key&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;key&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;s&#34;&gt;&amp;#34;Node&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;unresponsive&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;isNodeUnresponsive&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;c&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;heartBeatTimeout&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;!=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;Reason&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;).&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;Error&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s&#34;&gt;&amp;#34;Failed to determine if node is responsive, will not reenqueue&amp;#34;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;unresponsive&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;nodeIsSchedulable&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;c&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;markNodeAsUnresponsive&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;);&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;!=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;				&lt;span class=&#34;k&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;c&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;checkNodeForOrphanedAndErroredVMIs&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;key&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;logger&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;!=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;k&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;err&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;nx&#34;&gt;c&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;requeueIfExists&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;key&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;node&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;k&#34;&gt;return&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;h2 id=&#34;将-pod-失败的-vmi-置为-failed&#34;&gt;将 Pod 失败的 vmi 置为 failed&lt;/h2&gt;
+&lt;p&gt;在&lt;code&gt;checkNodeForOrphanedAndErroredVMIs&lt;/code&gt;该方法中首先列出该节点上 running 和 Scheduled 状态的 vmi 列表，接着对于该节点上的 handle Pod，查看daemonset 是否正常，最后给controller 添加event：&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;virt-handler is not present, there are orphaned vmis on this node. Run virt-handler on this node to migrate or remove them.
+&lt;/code&gt;&lt;/pre&gt;&lt;/blockquote&gt;
+&lt;p&gt;接下来对于该节点上的 launcher Pod 筛选出还正常的 Pod&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;div class=&#34;chroma&#34;&gt;
+&lt;table class=&#34;lntable&#34;&gt;&lt;tr&gt;&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code&gt;&lt;span class=&#34;lnt&#34;&gt; 1
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 2
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 3
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 4
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 5
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 6
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 7
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 8
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt; 9
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;10
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;11
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;12
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;13
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;14
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;15
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;16
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;17
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;18
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;19
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;20
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;21
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;22
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;23
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;24
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;25
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;26
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;27
+&lt;/span&gt;&lt;span class=&#34;lnt&#34;&gt;28
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;
+&lt;td class=&#34;lntd&#34;&gt;
+&lt;pre tabindex=&#34;0&#34; class=&#34;chroma&#34;&gt;&lt;code class=&#34;language-golang&#34; data-lang=&#34;golang&#34;&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;k&#34;&gt;for&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;i&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;range&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;list&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Items&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;pod&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;list&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Items&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;i&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;controllerRef&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;controller&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;GetControllerOf&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;pod&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;);&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;!&lt;/span&gt;&lt;span class=&#34;nf&#34;&gt;isControlledByVMI&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;controllerRef&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;k&#34;&gt;continue&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;c1&#34;&gt;// Some pods get stuck in a pending Termination during shutdown
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;		&lt;span class=&#34;c1&#34;&gt;// due to virt-handler not being available to unmount container disk
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;		&lt;span class=&#34;c1&#34;&gt;// mount propagation. A pod with all containers terminated is not
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;		&lt;span class=&#34;c1&#34;&gt;// considered alive
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;&lt;span class=&#34;c1&#34;&gt;&lt;/span&gt;		&lt;span class=&#34;nx&#34;&gt;allContainersTerminated&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;false&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;len&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;pod&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Status&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;ContainerStatuses&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;nx&#34;&gt;allContainersTerminated&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;k&#34;&gt;for&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;_&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;status&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;range&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;pod&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Status&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;ContainerStatuses&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;				&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;status&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;State&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Terminated&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;nil&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;					&lt;span class=&#34;nx&#34;&gt;allContainersTerminated&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kc&#34;&gt;false&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;					&lt;span class=&#34;k&#34;&gt;break&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;				&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;phase&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;pod&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Status&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;Phase&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;nx&#34;&gt;toAppendPod&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;:=&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;!&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;allContainersTerminated&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;phase&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;!=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;v1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;PodFailed&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;phase&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;!=&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;v1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;PodSucceeded&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;toAppendPod&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;nx&#34;&gt;pods&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;append&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;nx&#34;&gt;pods&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;nx&#34;&gt;pod&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;			&lt;span class=&#34;k&#34;&gt;continue&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;		&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span class=&#34;line&#34;&gt;&lt;span class=&#34;cl&#34;&gt;	&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;&lt;p&gt;根据这些 Pod 和 该节点上 vmi 的差集，筛选出 Pod 已经不正常的vmi，将这些 vmi 的状态置为failed。后续由vmi-controller 执行处理逻辑。&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/kubevirt/" term="Kubevirt" label="Kubevirt" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/code/" term="code" label="code" />
+                            
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">hugo文章中date非法导致页面无法创建</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo/hugo-time/" />
             <id>http://longchuanzheng.github.io/posts/hugo/hugo-time/</id>
-            <updated>2023-02-15T22:00:50&#43;08:00</updated>
+            <updated>2023-02-23T10:29:20&#43;08:00</updated>
             <published>2022-04-29T19:32:29&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -66,7 +275,7 @@
             <title type="text">hugo使用meme主题后的目录生成技巧</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo/hugo-list/" />
             <id>http://longchuanzheng.github.io/posts/hugo/hugo-list/</id>
-            <updated>2023-02-15T22:01:04&#43;08:00</updated>
+            <updated>2023-02-23T10:29:20&#43;08:00</updated>
             <published>2022-04-29T15:05:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -165,17 +374,19 @@
             <title type="text">使用hugo搭建博客的简单流程-win10</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hugo/hugo-use/" />
             <id>http://longchuanzheng.github.io/posts/hugo/hugo-use/</id>
-            <updated>2023-02-15T22:00:35&#43;08:00</updated>
+            <updated>2023-02-23T10:36:29&#43;08:00</updated>
             <published>2022-04-29T10:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
                     <uri>http://longchuanzheng.github.io/</uri>
                     <email>zal42@outlook.com</email>
                     </author>
-            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">安装 Hugo（extended扩展版） ~ $ scoop install hugo-extended 生成Hugo站点，在目标目录执行： ~……</summary>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">安装 Hugo（extended扩展版） //Scoop 安装 https://github.com/ScoopInstaller/Install#readme ~ $ scoop install hugo-extended 生成Hugo站点，在目标目录……</summary>
             
                 <content type="html">&lt;h2 id=&#34;安装-hugoextended扩展版&#34;&gt;安装 Hugo（extended扩展版）&lt;/h2&gt;
-&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ scoop install hugo-extended
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//Scoop 安装
+https://github.com/ScoopInstaller/Install#readme
+~ $ scoop install hugo-extended
 &lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;生成hugo站点在目标目录执行&#34;&gt;生成Hugo站点，在目标目录执行：&lt;/h2&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;~ $ hugo new site hugo-blog
 ~ $ cd hugo-blog
@@ -332,7 +543,7 @@
             <title type="text">Hello World！ 你好 世界！</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/hello-world/hello-world/" />
             <id>http://longchuanzheng.github.io/posts/hello-world/hello-world/</id>
-            <updated>2023-02-15T22:01:44&#43;08:00</updated>
+            <updated>2023-02-23T10:29:20&#43;08:00</updated>
             <published>2022-03-12T23:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -362,7 +573,7 @@
             <title type="text">Raft算法研究现状</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/raft/raft/" />
             <id>http://longchuanzheng.github.io/posts/raft/raft/</id>
-            <updated>2023-02-15T22:32:55&#43;08:00</updated>
+            <updated>2023-02-23T10:29:20&#43;08:00</updated>
             <published>2022-03-12T23:04:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -426,7 +637,7 @@
 &lt;h2 id=&#34;相关知识&#34;&gt;相关知识&lt;/h2&gt;
 &lt;p&gt;  该部分主要介绍共识达成的条件、quorum这个概念以及复制状态机。&lt;/p&gt;
 &lt;h3 id=&#34;共识达成的条件&#34;&gt;共识达成的条件&lt;/h3&gt;
-&lt;p&gt;  对于共识达成的条件在网络上有相当多的讨论，可能无法得出统一结论，这里的内容来自于Ongaro D介绍Raft算法的的博士论文《Consensus: Bridging theory and practice》&lt;sup id=&#34;fnref:2&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:2&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;2&lt;/a&gt;&lt;/sup&gt;。主要包含三个条件一致性、合法性以及可终结性：&lt;/p&gt;
+&lt;p&gt;  对于共识达成的条件在网络上有相当多的讨论，可能无法得出统一结论，这里的内容来自于Ongaro D介绍Raft算法的的博士论文《Consensus: Bridging theory and practice》&lt;sup id=&#34;fnref1:2&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:2&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;2&lt;/a&gt;&lt;/sup&gt;。主要包含三个条件一致性、合法性以及可终结性：&lt;/p&gt;
 &lt;p&gt;一致性(agreement)：所有正常的节点将得出相同的值;&lt;/p&gt;
 &lt;p&gt;合法性(validity)：被决定的值由一个正常的节点提出;&lt;/p&gt;
 &lt;p&gt;可终结性(termination)：所有正常节点最终将决定一个值。&lt;/p&gt;
@@ -484,7 +695,7 @@ $$&lt;/p&gt;
 &lt;p&gt;  纠删码复制使用 &lt;em&gt;(k,m)&lt;/em&gt;-RS code*(k+m=N)* 对原日志项进行处理，如图5所示 index 和 term 应该提前剥离出并添加在处理过的 (&lt;em&gt;f+k)&lt;/em&gt; 个数据块的头部。Leader 将数据块分别发给对应的 follower，当收到至少 (&lt;em&gt;f+k)&lt;/em&gt; 个回复后，leader 将该日志实体应用(暗示当活节点数少于 (&lt;em&gt;f+k)&lt;/em&gt; 时无法使用纠删码复制)，因为在 (&lt;em&gt;f+1)&lt;/em&gt; 个节点中至少有 &lt;em&gt;k&lt;/em&gt; 个节点拥有该日志项的数据块，所以任何拥有编码后数据块的 follower 可以正常发起选举并通过其他节点恢复出完整日志项。而当没有 &lt;em&gt;(f+k)&lt;/em&gt; 个节点在线时纠删码复制无法完成，leader 节点需要使用 Raft 算法中使用的日志项复制方式。&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;5.png&#34; alt=&#34;CRaft算法中日志项处理流程&#34;&gt;&lt;/p&gt;
 &lt;center&gt;图5 CRaft算法中日志项处理流程&lt;/center&gt;
-&lt;p&gt;  值得注意的是，新 leader 选出后需要先标记出日志中未应用的日志项编码块，并向 follower 节点广播请求得到相应日志项编码块，对于每个日志项如果收到 &lt;em&gt;k&lt;/em&gt; 个编码块或一个完整日志项即可恢复，等待所有未应用日志项都恢复成完整日志项后再按顺序应用，当有日志项无法恢复时将其和之后所有日志项(即使是完全的)从日志中删除。恢复或删除完成后额外步骤完成，显然 leader 的额外步骤进行了日志项删除，破坏了Raft算法中的日志只增原则，因此在&lt;sup id=&#34;fnref:10&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:10&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;10&lt;/a&gt;&lt;/sup&gt;中还证明这种破坏并不会影响安全性。&lt;/p&gt;
+&lt;p&gt;  值得注意的是，新 leader 选出后需要先标记出日志中未应用的日志项编码块，并向 follower 节点广播请求得到相应日志项编码块，对于每个日志项如果收到 &lt;em&gt;k&lt;/em&gt; 个编码块或一个完整日志项即可恢复，等待所有未应用日志项都恢复成完整日志项后再按顺序应用，当有日志项无法恢复时将其和之后所有日志项(即使是完全的)从日志中删除。恢复或删除完成后额外步骤完成，显然 leader 的额外步骤进行了日志项删除，破坏了Raft算法中的日志只增原则，因此在&lt;sup id=&#34;fnref1:10&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:10&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;10&lt;/a&gt;&lt;/sup&gt;中还证明这种破坏并不会影响安全性。&lt;/p&gt;
 &lt;p&gt;  CRaft算法通过 &lt;em&gt;(k,m)&lt;/em&gt;-RS code 编码日志项，当使用纠删码复制时网络和存储负载都降为原来的 &lt;em&gt;1/k&lt;/em&gt;，因此与原 Raft 相比可以获得更优的写时延和吞吐量，且拥有与 Raft 算法同等的活性．但由于需要恢复数据块，CRaft 读操作延迟大于 Raft，但重复读取同一数据可以让延迟相对降低．&lt;/p&gt;
 &lt;h3 id=&#34;添加轻量化节点&#34;&gt;添加轻量化节点&lt;/h3&gt;
 &lt;h4 id=&#34;pirogue算法&#34;&gt;Pirogue算法&lt;/h4&gt;
@@ -496,7 +707,7 @@ $$&lt;/p&gt;
 &lt;p&gt;  随着Raft算法的广泛使用，更大的集群规模是可以预见的发展方向。虽然Raft算法使用随机选举超时机制，但节点数量过多时仍然可能出现投票分散的情况。引入Kademlia协议&lt;sup id=&#34;fnref:13&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:13&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;13&lt;/a&gt;&lt;/sup&gt;，修改leader选举和日志复制流程，可以解决当节点数量较多时leader选举效率低下的问题。&lt;/p&gt;
 &lt;p&gt;  Kademlia协议是一种基于异或运算的分布式哈希表(DHT)，可以高效的实现分布式存储与路由．Kademlia协议中节点通过维持路由表(K桶)来维持与其他节点之间的联系， K桶在网络层动态维持，因此增加节点并不会对集群造成太多负担。&lt;/p&gt;
 &lt;p&gt;  KRaft算法在集群中维持一个以leader为中心的K桶称为“表”，通过与leader的最后联系的时间顺序与id距离为依据，不断更新K桶中节点。并保证leader节点失效后K桶中节点日志状态相同．当leader失效后K桶中节点均可转变为candidate，candidate根据当前时间生成一个随机数&lt;em&gt;I&lt;/em&gt;(时间戳+随机数)，并在&lt;em&gt;I&lt;/em&gt;时刻之后开始选举。产生最小随机数的candidate最有可能被选为新的leader．新leader出现后以其为中心更新K桶(表)。&lt;/p&gt;
-&lt;p&gt;  由于K桶的更新可以保证在线时间较长的节点有更大的可能性保持在K桶中。所以KRaft算法选出的leader节点在一定程度上更加稳定。采用随机数&lt;em&gt;I&lt;/em&gt;的机制，也不会完全破坏选举的随机性。动态设置适合集群节点数量的K桶规模，保证了在庞大节点数量下不完全破坏选举稳定性和随机性并大大提升选举效率。而且K桶中节点积极更新，基于Kademlia协议的思想，使桶中节点承担部分日志项复制的职责，来减轻leader节点的负载。当leader收到所有表中节点的AppendEntries回复后这些节点就有权力去传播当前日志项。从而使日志复制的过程变为多节点并行，提高日志复制速率．在文中&lt;sup id=&#34;fnref:13&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:13&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;13&lt;/a&gt;&lt;/sup&gt;32个节点的测试中，leader选举时常缩短短了67%，吞吐量提高了41%．&lt;/p&gt;
+&lt;p&gt;  由于K桶的更新可以保证在线时间较长的节点有更大的可能性保持在K桶中。所以KRaft算法选出的leader节点在一定程度上更加稳定。采用随机数&lt;em&gt;I&lt;/em&gt;的机制，也不会完全破坏选举的随机性。动态设置适合集群节点数量的K桶规模，保证了在庞大节点数量下不完全破坏选举稳定性和随机性并大大提升选举效率。而且K桶中节点积极更新，基于Kademlia协议的思想，使桶中节点承担部分日志项复制的职责，来减轻leader节点的负载。当leader收到所有表中节点的AppendEntries回复后这些节点就有权力去传播当前日志项。从而使日志复制的过程变为多节点并行，提高日志复制速率．在文中&lt;sup id=&#34;fnref1:13&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:13&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;13&lt;/a&gt;&lt;/sup&gt;32个节点的测试中，leader选举时常缩短短了67%，吞吐量提高了41%．&lt;/p&gt;
 &lt;h3 id=&#34;multi-raft&#34;&gt;Multi-Raft&lt;/h3&gt;
 &lt;p&gt;  在Multi-Raft&lt;sup id=&#34;fnref:14&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:14&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;14&lt;/a&gt;&lt;/sup&gt;中通过多组Raft集群，将用户的请求分给不同的集群。通过两阶段提交在集群之间保持强一致性。虽然Multi-Raft可以提高吞吐量，但是每次扩容都会多消耗一倍的资源。在文献&lt;sup id=&#34;fnref:15&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:15&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;15&lt;/a&gt;&lt;/sup&gt;提出的Geo-Raft中通过将集群分块来提高集群规模。&lt;/p&gt;
 &lt;p&gt;  Geo-Raft算法中还增添了 secretaries(秘书)节点与 observers(观察者)节点。秘书节点协助leader分担的日志复制任务。观察者节点服务 follower 帮助其处理读请求 如图6所示，Geo-Raft将集群分为 &lt;em&gt;n&lt;/em&gt; 子块，不同子块中秘书节点和观察者节点数量不一。唯一的 leader 通过秘书节点向其他块中的 follower 复制日志项。而读请求被分配给 follower 节点或观察者节点。通过上述机制 leader 节点可以管理数量众多的 follower 节点。秘书节点和观察者节点都属于无状态节点，仅分担负载可以随意替换，因此对算法安全性不造成影响。&lt;/p&gt;
@@ -510,62 +721,62 @@ $$&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;7.png&#34; alt=&#34;FRaft算法中日志项应用流程&#34;&gt;&lt;/p&gt;
 &lt;center&gt;图7 FRaft算法中日志项应用流程&lt;/center&gt;
 &lt;p&gt; 还有Guo等提出了基于特殊标记日志实体的日志恢复算法&lt;sup id=&#34;fnref:17&#34;&gt;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fn:17&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;17&lt;/a&gt;&lt;/sup&gt;．通过特殊标记将需要恢复的节点中的日志与leader中不一致部分整体删除，不需要逐个日志项进行检测，减少交互次数。提高日志复制效率。&lt;/p&gt;
-&lt;section class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
+&lt;div class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
 &lt;hr&gt;
 &lt;ol&gt;
-&lt;li id=&#34;fn:1&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:1&#34;&gt;
 &lt;p&gt;Leslie L. The part-time parliament[J]. ACM Transactions on Computer Systems, 1998, 16(2): 133-169.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:1&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:2&#34; role=&#34;doc-endnote&#34;&gt;
-&lt;p&gt;Ongaro D. Consensus: Bridging theory and practice[D]. Stanford University, 2014.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:2&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;li id=&#34;fn:2&#34;&gt;
+&lt;p&gt;Ongaro D. Consensus: Bridging theory and practice[D]. Stanford University, 2014.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:2&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref1:2&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:3&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:3&#34;&gt;
 &lt;p&gt;Ongaro D, Ousterhout J. In search of an understandable consensus algorithm[C]//2014 USENIX Annual Technical Conference (USENIX ATC’ 14). Berkeley, CA: USENIX Association, 2014: 305-319.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:3&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:4&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:4&#34;&gt;
 &lt;p&gt;Yu G, Hua L, Yuanping L, et al. Using TLA+ to Specify Leader Election of Raft Algorithm with Consideration of Leadership Transfer in Multiple Controllers[C]//2019 IEEE 19th International Conference on Software Quality, Reliability and Security Companion (QRS-C). Piscataway, NJ: IEEE, 2019: 219-226.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:4&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:5&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:5&#34;&gt;
 &lt;p&gt;Lincoln C R. Specifying Systems: The TLA+ Language and Tools for Hardware and Software Engineers[J]. Software Quality Professional, 2003, 5(4): 43.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:5&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:6&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:6&#34;&gt;
 &lt;p&gt;Cousineau D, Doligez D, Lamport L, et al. TLA+ proofs[C]//International Symposium on Formal Methods. Heidelberg, Berlin, Germany: Springer, 2012: 147-154.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:6&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:7&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:7&#34;&gt;
 &lt;p&gt;Huang D, Ma X, Zhang S. Performance analysis of the raft consensus algorithm for private blockchains[J]. IEEE Transactions on Systems, Man, and Cybernetics: Systems, 2019, 50(1): 172-181.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:7&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:8&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:8&#34;&gt;
 &lt;p&gt;Arora V, Mittal T, Agrawal D, et al. Leader or majority: Why have one when you can have both? improving read scalability in raft-like consensus protocols[C]//9th USENIX Workshop on Hot Topics in Cloud Computing (HotCloud 17). Berkeley, CA: USENIX Association, 2017[2020.12.25]. &lt;a href=&#34;https://www.usenix.org/conference/hotcloud17/program/presentation/arora&#34;&gt;https://www.usenix.org/conference/hotcloud17/program/presentation/arora&lt;/a&gt;&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:8&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:9&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:9&#34;&gt;
 &lt;p&gt;Dexter P, Sendir B, Chiu K. Detecting and Reacting to Anomalies in Relaxed Uses of Raft[C]//2020 20th IEEE/ACM International Symposium on Cluster, Cloud and Internet Computing (CCGRID). Piscataway, NJ: IEEE, 2020: 659-668.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:9&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:10&#34; role=&#34;doc-endnote&#34;&gt;
-&lt;p&gt;Wang Z, Li T, Wang H, et al. CRaft: An Erasure-coding-supported Version of Raft for Reducing Storage Cost and Network Cost[C]//18th USENIX Conference on File and Storage Technologies (FAST’ 20). Berkeley, CA: USENIX Association, 2020: 297-308.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:10&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;li id=&#34;fn:10&#34;&gt;
+&lt;p&gt;Wang Z, Li T, Wang H, et al. CRaft: An Erasure-coding-supported Version of Raft for Reducing Storage Cost and Network Cost[C]//18th USENIX Conference on File and Storage Technologies (FAST’ 20). Berkeley, CA: USENIX Association, 2020: 297-308.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:10&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref1:10&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:11&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:11&#34;&gt;
 &lt;p&gt;Pâris J F, Long D D E. Pirogue, a lighter dynamic version of the Raft distributed consensus algorithm[C]//2015 IEEE 34th International Performance Computing and Communications Conference (IPCCC). Piscataway, NJ: IEEE, 2015: 1-8.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:11&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:12&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:12&#34;&gt;
 &lt;p&gt;Nakagawa T, Hayashibara N. Energy efficient raft consensus algorithm[C]//International Conference on Network-Based Information Systems. Cham, Switzerland: Springer, 2017: 719-727.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:12&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:13&#34; role=&#34;doc-endnote&#34;&gt;
-&lt;p&gt;Maymounkov P, Mazieres D. Kademlia: A peer-to-peer information system based on the xor metric[C]//International Workshop on Peer-to-Peer Systems. Heidelberg, Berlin, Germany: Springer, 2002: 53-65.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:13&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
+&lt;li id=&#34;fn:13&#34;&gt;
+&lt;p&gt;Maymounkov P, Mazieres D. Kademlia: A peer-to-peer information system based on the xor metric[C]//International Workshop on Peer-to-Peer Systems. Heidelberg, Berlin, Germany: Springer, 2002: 53-65.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:13&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref1:13&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:14&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:14&#34;&gt;
 &lt;p&gt;Howard H, Schwarzkopf M, Madhavapeddy A, et al. Raft refloated: Do we have consensus?[J]. ACM SIGOPS Operating Systems Review, 2015, 49(1): 12-21.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:14&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:15&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:15&#34;&gt;
 &lt;p&gt;Xu Z, Stewart C, Huang J. Elastic, geo-distributed RAFT[C]//2019 IEEE/ACM 27th International Symposium on Quality of Service (IWQoS). Piscataway, NJ: IEEE, 2019: 1-9.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:15&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:16&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:16&#34;&gt;
 &lt;p&gt;Friedman R, Van Renesse R. Packing messages as a tool for boosting the performance of total ordering protocols[C]//Proceedings. The Sixth IEEE International Symposium on High Performance Distributed Computing. NJ: IEEE, 1997: 233-242.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:16&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
-&lt;li id=&#34;fn:17&#34; role=&#34;doc-endnote&#34;&gt;
+&lt;li id=&#34;fn:17&#34;&gt;
 &lt;p&gt;Guo J, Wang J, Cai P, et al. Fast follower recovery for state machine replication[C]//Asia-Pacific Web (APWeb) and Web-Age Information Management (WAIM) Joint Conference on Web and Big Data. Cham, Switzerland: Springer, 2017: 311-319.&amp;#160;&lt;a href=&#34;http://longchuanzheng.github.io/posts/raft/raft/#fnref:17&#34; class=&#34;footnote-backref&#34; role=&#34;doc-backlink&#34;&gt;&amp;#x21a9;&amp;#xfe0e;&lt;/a&gt;&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
-&lt;/section&gt;
+&lt;/div&gt;
 </content>
             
             
