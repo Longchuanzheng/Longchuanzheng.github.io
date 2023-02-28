@@ -3,10 +3,43 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/tags/exp/</loc>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/kubernetes/</loc>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/</loc>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/</loc>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/tags/</loc>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubernetes/env/minikubedep/</loc>
+    <lastmod>2023-02-28T17:59:17+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/virt/libvirt-deploy-and-use/</loc>
+    <lastmod>2023-02-28T17:44:12+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/virt/</loc>
+    <lastmod>2023-02-28T17:44:12+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/cdi/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
+    <lastmod>2023-02-28T17:08:30+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubevirt/cdi/cdiimageimport/</loc>
+    <lastmod>2023-02-28T17:08:30+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/tags/code/</loc>
+    <lastmod>2023-02-28T17:08:30+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/kubevirt/</loc>
+    <lastmod>2023-02-28T17:08:30+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubevirt/cdi/cdidvcreate/</loc>
     <lastmod>2023-02-28T16:10:15+08:00</lastmod>
@@ -14,29 +47,11 @@
     <loc>http://longchuanzheng.github.io/posts/kubevirt/cdi/cdidvprocess/</loc>
     <lastmod>2023-02-28T10:08:50+08:00</lastmod>
   </url><url>
-    <loc>http://longchuanzheng.github.io/tags/code/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/categories/kubevirt/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/tags/</loc>
-    <lastmod>2023-02-28T16:10:15+08:00</lastmod>
-  </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubevirt/evacuationcontroller/</loc>
     <lastmod>2023-02-27T15:03:24+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubevirt/nodecontroller/</loc>
     <lastmod>2023-02-27T13:58:01+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/tags/exp/</loc>
-    <lastmod>2023-02-23T10:36:29+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/hugo/</loc>
     <lastmod>2023-02-23T10:36:29+08:00</lastmod>
