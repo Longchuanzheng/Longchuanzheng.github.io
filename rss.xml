@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Tue, 28 Feb 2023 17:59:31 &#43;0800</lastBuildDate>
+        <lastBuildDate>Tue, 28 Feb 2023 19:10:20 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -38,8 +38,7 @@
                 
                 <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
                 
-                    <description>&lt;p&gt;这篇记录是刚入职时完成的，那个周五晚上留在公司整理格式（摸鱼），马哥（组长）过来问我在干啥。半年后马哥就转组了，也许当时他就知道自己将会转组。之前几年的校招第一年通常要背D，今年新组长打绩效，五个校招有一背D还有一个B（我是平庸的C，是明日之星候选人）。现在看来 kubernetes 的环境安装确实很复杂，但是对于应用者来说使用脚本（kubekey、miniminikube、k3s）也非常方便，如果想研究可以去看kubeadmin等的源码。&lt;/p&gt;
-&lt;h2 id=&#34;宿主机环境&#34;&gt;宿主机环境&lt;/h2&gt;
+                    <description>&lt;h2 id=&#34;宿主机环境&#34;&gt;宿主机环境&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;操作系统：win10&lt;/li&gt;
 &lt;li&gt;虚拟机：VMware 16&lt;/li&gt;
@@ -510,9 +509,9 @@ Domain centos7-zal started
 &lt;p&gt;打开vnc连接虚拟机（port为xml中定义）&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;17.png&#34; alt=&#34;进入系统&#34;&gt;&lt;/p&gt;
 &lt;center&gt;进入系统
-![显示安装页面](18.png)
+&lt;p&gt;&lt;img src=&#34;18.png&#34; alt=&#34;显示安装页面&#34;&gt;&lt;/p&gt;
 &lt;center&gt;显示安装页面
-![](19.png)
+&lt;p&gt;&lt;img src=&#34;19.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
 &lt;h4 id=&#34;取消虚拟机&#34;&gt;取消虚拟机&lt;/h4&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;virsh undefine centos7-1
 &lt;/code&gt;&lt;/pre&gt;</description>

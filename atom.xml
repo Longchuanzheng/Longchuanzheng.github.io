@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2023-02-28T17:59:31&#43;08:00</updated>
+    <updated>2023-02-28T19:10:20&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,17 +20,16 @@
             <title type="text">不求甚解搭环境-minikube(2022.6.17)</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/env/minikubedep/" />
             <id>http://longchuanzheng.github.io/posts/kubernetes/env/minikubedep/</id>
-            <updated>2023-02-28T17:59:17&#43;08:00</updated>
+            <updated>2023-02-28T19:10:07&#43;08:00</updated>
             <published>2023-02-28T17:44:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
                     <uri>http://longchuanzheng.github.io/</uri>
                     <email>zal42@outlook.com</email>
                     </author>
-            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">这篇记录是刚入职时完成的，那个周五晚上留在公司整理格式（摸鱼），马哥（组长）过来问我……</summary>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">宿主机环境 操作系统：win10 虚拟机：VMware 16 虚拟机操作系统：unbantu2……</summary>
             
-                <content type="html">&lt;p&gt;这篇记录是刚入职时完成的，那个周五晚上留在公司整理格式（摸鱼），马哥（组长）过来问我在干啥。半年后马哥就转组了，也许当时他就知道自己将会转组。之前几年的校招第一年通常要背D，今年新组长打绩效，五个校招有一背D还有一个B（我是平庸的C，是明日之星候选人）。现在看来 kubernetes 的环境安装确实很复杂，但是对于应用者来说使用脚本（kubekey、miniminikube、k3s）也非常方便，如果想研究可以去看kubeadmin等的源码。&lt;/p&gt;
-&lt;h2 id=&#34;宿主机环境&#34;&gt;宿主机环境&lt;/h2&gt;
+                <content type="html">&lt;h2 id=&#34;宿主机环境&#34;&gt;宿主机环境&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;操作系统：win10&lt;/li&gt;
 &lt;li&gt;虚拟机：VMware 16&lt;/li&gt;
@@ -207,7 +206,7 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 8B57C5C2836F4BEB
             <title type="text">libvirt环境搭建与使用</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/virt/libvirt-deploy-and-use/" />
             <id>http://longchuanzheng.github.io/posts/virt/libvirt-deploy-and-use/</id>
-            <updated>2023-02-28T17:44:12&#43;08:00</updated>
+            <updated>2023-02-28T18:02:32&#43;08:00</updated>
             <published>2023-02-28T17:43:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -504,9 +503,9 @@ Domain centos7-zal started
 &lt;p&gt;打开vnc连接虚拟机（port为xml中定义）&lt;/p&gt;
 &lt;p&gt;&lt;img src=&#34;17.png&#34; alt=&#34;进入系统&#34;&gt;&lt;/p&gt;
 &lt;center&gt;进入系统
-![显示安装页面](18.png)
+&lt;p&gt;&lt;img src=&#34;18.png&#34; alt=&#34;显示安装页面&#34;&gt;&lt;/p&gt;
 &lt;center&gt;显示安装页面
-![](19.png)
+&lt;p&gt;&lt;img src=&#34;19.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
 &lt;h4 id=&#34;取消虚拟机&#34;&gt;取消虚拟机&lt;/h4&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;virsh undefine centos7-1
 &lt;/code&gt;&lt;/pre&gt;</content>
