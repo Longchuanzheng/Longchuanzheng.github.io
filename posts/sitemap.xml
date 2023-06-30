@@ -3,25 +3,31 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/code/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/kubevirt/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
   </url><url>
-    <loc>http://longchuanzheng.github.io/posts/kubevirt/virtoperator/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <loc>http://longchuanzheng.github.io/posts/kubevirt/vnc/</loc>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/</loc>
-    <lastmod>2023-03-02T18:44:53+08:00</lastmod>
+    <lastmod>2023-06-30T15:04:42+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubevirt/virtlauncher/</loc>
+    <lastmod>2023-03-31T18:13:36+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubevirt/virtoperator/</loc>
+    <lastmod>2023-03-31T15:17:21+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubevirt/virtcontrollerinit/</loc>
     <lastmod>2023-03-02T17:28:53+08:00</lastmod>
