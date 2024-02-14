@@ -23,15 +23,15 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Wed, 14 Feb 2024 21:14:30 &#43;0800</lastBuildDate>
+        <lastBuildDate>Wed, 14 Feb 2024 21:15:35 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
         
             <item>
                 <title>Kubevirt vmclone 重复创建bug分析</title>
-                <link>http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</link>
-                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</guid>
+                <link>http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</guid>
                 <pubDate>Wed, 14 Feb 2024 09:53:05 &#43;0800</pubDate>
                 
                     <author>zal42@outlook.com (Longchuanzheng)</author>
