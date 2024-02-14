@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-02-14T20:45:18&#43;08:00</updated>
+    <updated>2024-02-14T21:02:16&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -6367,8 +6367,8 @@ https://github.com/ScoopInstaller/Install#readme
     
         <entry>
             <title type="text"></title>
-            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/" />
-            <id>http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</id>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/" />
+            <id>http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</id>
             <updated>2024-02-14T20:44:20&#43;08:00</updated>
             <published>0001-01-01T00:00:00&#43;00:00</published>
             <author>

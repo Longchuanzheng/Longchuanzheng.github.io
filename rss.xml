@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Wed, 14 Feb 2024 20:45:18 &#43;0800</lastBuildDate>
+        <lastBuildDate>Wed, 14 Feb 2024 21:02:16 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -6319,8 +6319,8 @@ https://github.com/ScoopInstaller/Install#readme
         
             <item>
                 <title></title>
-                <link>http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</link>
-                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</guid>
+                <link>http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</guid>
                 <pubDate>Mon, 01 Jan 0001 00:00:00 &#43;0000</pubDate>
                 
                     <author>zal42@outlook.com (Longchuanzheng)</author>
