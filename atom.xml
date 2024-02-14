@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-02-14T21:13:38&#43;08:00</updated>
+    <updated>2024-02-14T21:14:30&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,8 +20,8 @@
             <title type="text">Kubevirt vmclone 重复创建bug分析</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/" />
             <id>http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</id>
-            <updated>2024-02-14T21:13:26&#43;08:00</updated>
-            <published>2024-02-04T09:53:05&#43;08:00</published>
+            <updated>2024-02-14T21:14:22&#43;08:00</updated>
+            <published>2024-02-14T09:53:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
                     <uri>http://longchuanzheng.github.io/</uri>
