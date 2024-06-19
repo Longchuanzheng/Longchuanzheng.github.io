@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Wed, 19 Jun 2024 16:58:24 &#43;0800</lastBuildDate>
+        <lastBuildDate>Wed, 19 Jun 2024 17:35:49 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -39,6 +39,8 @@
                 <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
                 
                     <description>&lt;p&gt;在k8s 中驱逐launcher pod 的操作可以转换成对虚机的热迁移。总的来说是通过k8s 的webhook 机制，当 pod 驱逐动作发起后会给vmi添加相关字段，出发热迁移操作。这里我们介绍对launcher pod 进行evict 操作后，kubevirt 侧做了什么。&lt;/p&gt;
+&lt;h2 id=&#34;disruptionbudget-for-launcher-pod&#34;&gt;DisruptionBudget for launcher pod&lt;/h2&gt;
+&lt;p&gt;为了让launcher pod 在驱逐中不受影响，kubevirt 为配置了相关驱逐迁移策略的launcher pod 添加DisruptionBudget，MinAvailable 为1。相关逻辑在pkg/virt-controller/watch/drain/disruptionbudget/disruptionbudget.go，因此相关launcher pod 并不会被驱逐。&lt;/p&gt;
 &lt;h2 id=&#34;validatingwebhookconfiguration&#34;&gt;ValidatingWebhookConfiguration&lt;/h2&gt;
 &lt;h3 id=&#34;部署validatingwebhookconfiguration&#34;&gt;部署ValidatingWebhookConfiguration&lt;/h3&gt;
 &lt;p&gt;virt-operator 将在部署kubevirt 阶段创建virt-api-validator 的ValidatingWebhookConfiguration&lt;/p&gt;

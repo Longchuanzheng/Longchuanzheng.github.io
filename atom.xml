@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-06-19T16:58:24&#43;08:00</updated>
+    <updated>2024-06-19T17:35:48&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,7 +20,7 @@
             <title type="text">驱逐launcher pod与kubevirt虚机迁移的关系</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/vmeviction/" />
             <id>http://longchuanzheng.github.io/posts/kubevirt/vmeviction/</id>
-            <updated>2024-06-19T16:57:38&#43;08:00</updated>
+            <updated>2024-06-19T17:35:37&#43;08:00</updated>
             <published>2024-06-19T16:57:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -30,6 +30,8 @@
             <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">在k8s 中驱逐launcher pod 的操作可以转换成对虚机的热迁移。总的来说是通过k8s……</summary>
             
                 <content type="html">&lt;p&gt;在k8s 中驱逐launcher pod 的操作可以转换成对虚机的热迁移。总的来说是通过k8s 的webhook 机制，当 pod 驱逐动作发起后会给vmi添加相关字段，出发热迁移操作。这里我们介绍对launcher pod 进行evict 操作后，kubevirt 侧做了什么。&lt;/p&gt;
+&lt;h2 id=&#34;disruptionbudget-for-launcher-pod&#34;&gt;DisruptionBudget for launcher pod&lt;/h2&gt;
+&lt;p&gt;为了让launcher pod 在驱逐中不受影响，kubevirt 为配置了相关驱逐迁移策略的launcher pod 添加DisruptionBudget，MinAvailable 为1。相关逻辑在pkg/virt-controller/watch/drain/disruptionbudget/disruptionbudget.go，因此相关launcher pod 并不会被驱逐。&lt;/p&gt;
 &lt;h2 id=&#34;validatingwebhookconfiguration&#34;&gt;ValidatingWebhookConfiguration&lt;/h2&gt;
 &lt;h3 id=&#34;部署validatingwebhookconfiguration&#34;&gt;部署ValidatingWebhookConfiguration&lt;/h3&gt;
 &lt;p&gt;virt-operator 将在部署kubevirt 阶段创建virt-api-validator 的ValidatingWebhookConfiguration&lt;/p&gt;
