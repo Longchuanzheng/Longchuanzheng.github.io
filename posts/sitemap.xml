@@ -3,24 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2024-02-14T21:14:22+08:00</lastmod>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/code/</loc>
-    <lastmod>2024-02-14T21:14:22+08:00</lastmod>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/kubevirt/</loc>
-    <lastmod>2024-02-14T21:14:22+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</loc>
-    <lastmod>2024-02-14T21:14:22+08:00</lastmod>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2024-02-14T21:14:22+08:00</lastmod>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2024-02-14T21:14:22+08:00</lastmod>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/</loc>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubevirt/vmeviction/</loc>
+    <lastmod>2024-06-19T16:57:38+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</loc>
     <lastmod>2024-02-14T21:14:22+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubevirt/vnc/</loc>

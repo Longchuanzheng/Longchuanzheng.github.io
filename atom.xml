@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-02-14T21:15:35&#43;08:00</updated>
+    <updated>2024-06-19T16:58:24&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -17,9 +17,325 @@
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
         <entry>
+            <title type="text">驱逐launcher pod与kubevirt虚机迁移的关系</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/vmeviction/" />
+            <id>http://longchuanzheng.github.io/posts/kubevirt/vmeviction/</id>
+            <updated>2024-06-19T16:57:38&#43;08:00</updated>
+            <published>2024-06-19T16:57:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">在k8s 中驱逐launcher pod 的操作可以转换成对虚机的热迁移。总的来说是通过k8s……</summary>
+            
+                <content type="html">&lt;p&gt;在k8s 中驱逐launcher pod 的操作可以转换成对虚机的热迁移。总的来说是通过k8s 的webhook 机制，当 pod 驱逐动作发起后会给vmi添加相关字段，出发热迁移操作。这里我们介绍对launcher pod 进行evict 操作后，kubevirt 侧做了什么。&lt;/p&gt;
+&lt;h2 id=&#34;validatingwebhookconfiguration&#34;&gt;ValidatingWebhookConfiguration&lt;/h2&gt;
+&lt;h3 id=&#34;部署validatingwebhookconfiguration&#34;&gt;部署ValidatingWebhookConfiguration&lt;/h3&gt;
+&lt;p&gt;virt-operator 将在部署kubevirt 阶段创建virt-api-validator 的ValidatingWebhookConfiguration&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;pkg/virt-operator/resource/generate/components/webhooks.go&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+...
+  name: virt-api-validator
+..
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    caBundle: 
+    ...
+    service:
+      name: virt-api
+      namespace: kubevirt
+      path: /launcher-eviction-validate
+      port: 443
+  failurePolicy: Ignore
+  matchPolicy: Equivalent
+  name: virt-launcher-eviction-interceptor.kubevirt.io
+  namespaceSelector: {}
+  objectSelector: {}
+  rules:
+  - apiGroups:
+    - &amp;#34;&amp;#34;
+    apiVersions:
+    - v1
+    operations:
+    - &amp;#39;*&amp;#39;
+    resources:
+    - pods/eviction
+    scope: &amp;#39;*&amp;#39;
+  sideEffects: NoneOnDryRun
+  timeoutSeconds: 10
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;virt-api-webhook-实现&#34;&gt;virt-api webhook 实现&lt;/h3&gt;
+&lt;p&gt;virt-api 侧实现该webhook&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//pkg/virt-api/webhooks/validating-webhook/validating-webhook.go
+func ServePodEvictionInterceptor(resp http.ResponseWriter, req *http.Request, clusterConfig *virtconfig.ClusterConfig, virtCli kubecli.KubevirtClient) {
+   validating_webhooks.Serve(resp, req, admitters.NewPodEvictionAdmitter(clusterConfig, virtCli, virtCli.GeneratedKubeVirtClient()))
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//pkg/util/webhooks/validating-webhooks/validating-webhook.go
+//webhook server 实现
+func Serve(resp http.ResponseWriter, req *http.Request, admitter Admitter) {
+   review, err := webhooks.GetAdmissionReview(req)
+   if err != nil {
+      resp.WriteHeader(http.StatusBadRequest)
+      return
+   }
+
+   response := admissionv1.AdmissionReview{
+      TypeMeta: v1.TypeMeta{
+         // match the request version to be
+         // backwards compatible with v1beta1
+         APIVersion: review.APIVersion,
+         Kind:       &amp;#34;AdmissionReview&amp;#34;,
+      },
+   }
+   //具体的webhook逻辑
+   reviewResponse := admitter.Admit(review)
+   if reviewResponse != nil {
+      response.Response = reviewResponse
+      response.Response.UID = review.Request.UID
+   }
+   // reset the Object and OldObject, they are not needed in admitter response.
+   review.Request.Object = runtime.RawExtension{}
+   review.Request.OldObject = runtime.RawExtension{}
+
+   responseBytes, err := json.Marshal(response)
+   if err != nil {
+      log.Log.Reason(err).Errorf(&amp;#34;failed json encode webhook response&amp;#34;)
+      resp.WriteHeader(http.StatusBadRequest)
+      return
+   }
+   if _, err := resp.Write(responseBytes); err != nil {
+      log.Log.Reason(err).Errorf(&amp;#34;failed to write webhook response&amp;#34;)
+      resp.WriteHeader(http.StatusBadRequest)
+      return
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;其中&lt;code&gt;PodEvictionAdmitter&lt;/code&gt; 实现了具体的webhook逻辑，如果是launcher pod，就去查看对应vmi的&lt;code&gt;EvictionStrategy&lt;/code&gt;（cluster config中可进行配置），当EvictionStrategy 策略存在时，&lt;code&gt;markVMI&lt;/code&gt;对vmi 的/status/evacuationNodeName 进行patch ，将值设为vmi.Status.NodeName&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//pkg/virt-api/webhooks/validating-webhook/admitters/pod-eviction-admitter.go
+func (admitter *PodEvictionAdmitter) Admit(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
+
+   pod, err := admitter.kubeClient.CoreV1().Pods(ar.Request.Namespace).Get(context.Background(), ar.Request.Name, metav1.GetOptions{})
+   if err != nil {
+      return validating_webhooks.NewPassingAdmissionResponse()
+   }
+//筛选出launcher pod
+   if !isVirtLauncher(pod) {
+      return validating_webhooks.NewPassingAdmissionResponse()
+   }
+
+   vmiName, exists := pod.GetAnnotations()[virtv1.DomainAnnotation]
+   if !exists {
+      return validating_webhooks.NewPassingAdmissionResponse()
+   }
+
+   vmi, err := admitter.virtClient.KubevirtV1().VirtualMachineInstances(ar.Request.Namespace).Get(context.Background(), vmiName, metav1.GetOptions{})
+   if err != nil {
+      return denied(fmt.Sprintf(&amp;#34;kubevirt failed getting the vmi: %s&amp;#34;, err.Error()))
+   }
+
+   evictionStrategy := migrations.VMIEvictionStrategy(admitter.clusterConfig, vmi)
+   if evictionStrategy == nil {
+      // we don&amp;#39;t act on VMIs without an eviction strategy
+      return validating_webhooks.NewPassingAdmissionResponse()
+   }
+
+   markForEviction := false
+
+   switch *evictionStrategy {
+   case virtv1.EvictionStrategyLiveMigrate:
+      if !vmi.IsMigratable() {
+         return denied(fmt.Sprintf(&amp;#34;VMI %s is configured with an eviction strategy but is not live-migratable&amp;#34;, vmi.Name))
+      }
+      markForEviction = true
+   case virtv1.EvictionStrategyLiveMigrateIfPossible:
+      if vmi.IsMigratable() {
+         markForEviction = true
+      }
+   case virtv1.EvictionStrategyExternal:
+      markForEviction = true
+   }
+
+   if markForEviction &amp;amp;&amp;amp; !vmi.IsMarkedForEviction() &amp;amp;&amp;amp; vmi.Status.NodeName == pod.Spec.NodeName {
+      dryRun := ar.Request.DryRun != nil &amp;amp;&amp;amp; *ar.Request.DryRun == true
+      err := admitter.markVMI(vmi.Namespace, vmi.Name, vmi.Status.NodeName, dryRun)
+      if err != nil {
+         // As with the previous case, it is up to the user to issue a retry.
+         return denied(fmt.Sprintf(&amp;#34;kubevirt failed marking the vmi for eviction: %s&amp;#34;, err.Error()))
+      }
+
+      return denied(fmt.Sprintf(&amp;#34;Eviction triggered evacuation of VMI \&amp;#34;%s/%s\&amp;#34;&amp;#34;, vmi.Namespace, vmi.Name))
+   }
+
+   // We can let the request go through because the pod is protected by a PDB if the VMI wants to be live-migrated on
+   // eviction. Otherwise, we can just evict it.
+   return validating_webhooks.NewPassingAdmissionResponse()
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;细节上，当pod 驱逐 需要kubevirt 执行迁移操作时denied 中返回码为429&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func denied(message string) *admissionv1.AdmissionResponse {
+   return &amp;amp;admissionv1.AdmissionResponse{
+      Allowed: false,
+      Result: &amp;amp;metav1.Status{
+         Message: message,
+         Code:    http.StatusTooManyRequests,
+      },
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;evacuationcontroller&#34;&gt;EvacuationController&lt;/h2&gt;
+&lt;p&gt;EvacuationController属于virt-controller，包括vmiInformer、migrationInformer、nodeInformer、vmiPodInformer，相关资源变动后会将相关联的node加入queue。&lt;/p&gt;
+&lt;p&gt;具体处理逻辑在sync 中:&lt;/p&gt;
+&lt;p&gt;首先统计出节点上需要迁移的vmi（node taint，vmi.status.evacuationNodeName 等），然后根据现存的迁移数量，为需要迁移的虚机创建 VirtualMachineInstanceMigration crd。其上会添加 &lt;code&gt;kubevirt.io/evacuationMigration&lt;/code&gt; 这个annotation。并会用于informer的&lt;code&gt;addMigration&lt;/code&gt; 中将有该ann的VirtualMachineInstanceMigration  所对应的node入队。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//pkg/virt-controller/watch/drain/evacuation/evacuation.go
+func (c *EvacuationController) sync(node *k8sv1.Node, vmisOnNode []*virtv1.VirtualMachineInstance, activeMigrations []*virtv1.VirtualMachineInstanceMigration) error {
+   // If the node has no drain taint, we have nothing to do
+   taintKey := *c.clusterConfig.GetMigrationConfiguration().NodeDrainTaintKey
+   taint := &amp;amp;k8sv1.Taint{
+      Key:    taintKey,
+      Effect: k8sv1.TaintEffectNoSchedule,
+   }
+
+   vmisToMigrate := vmisToMigrate(node, vmisOnNode, taint)
+   if len(vmisToMigrate) == 0 {
+      return nil
+   }
+
+   migrationCandidates, nonMigrateable := c.filterRunningNonMigratingVMIs(vmisToMigrate, activeMigrations)
+   if len(migrationCandidates) == 0 &amp;amp;&amp;amp; len(nonMigrateable) == 0 {
+      return nil
+   }
+
+   runningMigrations := migrationutils.FilterRunningMigrations(activeMigrations)
+   activeMigrationsFromThisSourceNode := c.numOfVMIMForThisSourceNode(vmisOnNode, runningMigrations)
+   maxParallelMigrationsPerOutboundNode :=
+      int(*c.clusterConfig.GetMigrationConfiguration().ParallelOutboundMigrationsPerNode)
+   maxParallelMigrations := int(*c.clusterConfig.GetMigrationConfiguration().ParallelMigrationsPerCluster)
+   freeSpotsPerCluster := maxParallelMigrations - len(runningMigrations)
+   freeSpotsPerThisSourceNode := maxParallelMigrationsPerOutboundNode - activeMigrationsFromThisSourceNode
+   freeSpots := int(math.Min(float64(freeSpotsPerCluster), float64(freeSpotsPerThisSourceNode)))
+   if freeSpots &amp;lt;= 0 {
+      c.Queue.AddAfter(node.Name, 5*time.Second)
+      return nil
+   }
+
+   diff := int(math.Min(float64(freeSpots), float64(len(migrationCandidates))))
+   remaining := freeSpots - diff
+   remainingForNonMigrateableDiff := int(math.Min(float64(remaining), float64(len(nonMigrateable))))
+
+   if remainingForNonMigrateableDiff &amp;gt; 0 {
+      // for all non-migrating VMIs which would get e spot emit a warning
+      for _, vmi := range nonMigrateable[0:remainingForNonMigrateableDiff] {
+         c.recorder.Eventf(vmi, k8sv1.EventTypeNormal, FailedCreateVirtualMachineInstanceMigrationReason, &amp;#34;VirtualMachineInstance is not migrateable&amp;#34;)
+      }
+
+   }
+
+   if diff == 0 {
+      if remainingForNonMigrateableDiff &amp;gt; 0 {
+         // Let&amp;#39;s ensure that some warnings will stay in the event log and periodically update
+         // In theory the warnings could disappear after one hour if nothing else updates
+         c.Queue.AddAfter(node.Name, 1*time.Minute)
+      }
+      // nothing to do
+      return nil
+   }
+
+   // TODO: should the order be randomized?
+   selectedCandidates := migrationCandidates[0:diff]
+
+   log.DefaultLogger().Infof(&amp;#34;node: %v, migrations: %v, candidates: %v, selected: %v&amp;#34;, node.Name, len(activeMigrations), len(migrationCandidates), len(selectedCandidates))
+
+   wg := &amp;amp;sync.WaitGroup{}
+   wg.Add(diff)
+
+   errChan := make(chan error, diff)
+
+   c.migrationExpectations.ExpectCreations(node.Name, diff)
+   for _, vmi := range selectedCandidates {
+      go func(vmi *virtv1.VirtualMachineInstance) {
+         defer wg.Done()
+         createdMigration, err := c.clientset.VirtualMachineInstanceMigration(vmi.Namespace).Create(context.Background(), GenerateNewMigration(vmi.Name, node.Name), v1.CreateOptions{})
+         if err != nil {
+            c.migrationExpectations.CreationObserved(node.Name)
+            c.recorder.Eventf(vmi, k8sv1.EventTypeWarning, FailedCreateVirtualMachineInstanceMigrationReason, &amp;#34;Error creating a Migration: %v&amp;#34;, err)
+            errChan &amp;lt;- err
+            return
+         } else {
+            c.recorder.Eventf(vmi, k8sv1.EventTypeNormal, SuccessfulCreateVirtualMachineInstanceMigrationReason, &amp;#34;Created Migration %s&amp;#34;, createdMigration.Name)
+         }
+      }(vmi)
+   }
+
+   wg.Wait()
+
+   select {
+   case err := &amp;lt;-errChan:
+      return err
+   default:
+   }
+   return nil
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;descheduler-in-kubevirt&#34;&gt;descheduler in kubevirt&lt;/h2&gt;
+&lt;p&gt;kubevirt 对 descheduler 逻辑有一定的支持，主要如下：&lt;/p&gt;
+&lt;p&gt;首先上文可知，&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;当pod 驱逐 需要kubevirt 执行迁移操作时，webhook会返回429&lt;/li&gt;
+&lt;li&gt;EvacuationController 创建的 VirtualMachineInstanceMigration 会添加 &lt;code&gt;kubevirt.io/evacuationMigration&lt;/code&gt; 这个annotation。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;其次：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在migrationcontroller中 新的 VirtualMachineInstanceMigration 如果包含&lt;code&gt;kubevirt.io/evacuationMigration&lt;/code&gt; 这个annotation。则会给 source pod 添加&lt;code&gt;descheduler.alpha.kubernetes.io/eviction-in-progress&lt;/code&gt; 这个annotations。当迁移失败后，将相对应source pod 上的这个annotation remove。&lt;/li&gt;
+&lt;li&gt;在vmi controller 创建 launcher pod  时添加&lt;code&gt;descheduler.alpha.kubernetes.io/request-evict-only&lt;/code&gt; annotations。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;由于kubevirt 的webhook会对相关的迁移操作返回false， 这会导致descheduler  驱逐其他pod， 因此导致集群状态异常。&lt;/p&gt;
+&lt;p&gt;kubevirt 希望 descheduler 添加相关逻辑。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;descheduler.alpha.kubernetes.io/request-evict-only&lt;/code&gt;表示descheduler 将对有这个ann的pod驱逐请求返回false 时特殊处理。&lt;/p&gt;
+&lt;p&gt;而&lt;code&gt;descheduler.alpha.kubernetes.io/eviction-in-progress&lt;/code&gt; 表示迁移正在进行，descheduler  不会驱逐请求失败对相关的驱逐控制计数器重新计数。&lt;/p&gt;
+&lt;p&gt;这部分逻辑descheduler   并未实现，目前为止descheduler 社区还在讨论这种实现的可行性。&lt;/p&gt;
+&lt;p&gt;参考文档：&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/kubevirt/kubevirt/blob/main/docs/handling-eviction-requests.md&#34;&gt;https://github.com/kubevirt/kubevirt/blob/main/docs/handling-eviction-requests.md&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/kubevirt/community/pull/258&#34;&gt;https://github.com/kubevirt/community/pull/258&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/kubevirt/community/blob/main/design-proposals/descheduler-support.md&#34;&gt;https://github.com/kubevirt/community/blob/main/design-proposals/descheduler-support.md&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/kubernetes-sigs/descheduler/pull/1354&#34;&gt;https://github.com/kubernetes-sigs/descheduler/pull/1354&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/kubernetes-sigs/descheduler/blob/master/keps/753-descheduling-framework/README.md&#34;&gt;https://github.com/kubernetes-sigs/descheduler/blob/master/keps/753-descheduling-framework/README.md&lt;/a&gt;&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/kubevirt/" term="Kubevirt" label="Kubevirt" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/code/" term="code" label="code" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
+        <entry>
             <title type="text">Kubevirt vmclone 重复创建bug分析</title>
-            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/" />
-            <id>http://longchuanzheng.github.io/posts/kubevirt/k8sobjduplicatecreation/</id>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/" />
+            <id>http://longchuanzheng.github.io/posts/kubevirt/objduplicatecreation/</id>
             <updated>2024-02-14T21:14:22&#43;08:00</updated>
             <published>2024-02-14T09:53:05&#43;08:00</published>
             <author>
