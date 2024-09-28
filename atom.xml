@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-06-19T17:35:48&#43;08:00</updated>
+    <updated>2024-09-28T15:55:38&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -16,6 +16,94 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">cgroup</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/linux/cgroup/cgroup1/" />
+            <id>http://longchuanzheng.github.io/posts/linux/cgroup/cgroup1/</id>
+            <updated>2024-09-28T15:55:19&#43;08:00</updated>
+            <published>2024-09-28T10:08:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">cgroup cgroup 是用来在操作系统中隔离资源的机制，但是应用层几乎无感知，笔者经常执行exec -it,nsenter -n……</summary>
+            
+                <content type="html">&lt;h2 id=&#34;cgroup&#34;&gt;cgroup&lt;/h2&gt;
+&lt;p&gt;cgroup 是用来在操作系统中隔离资源的机制，但是应用层几乎无感知，笔者经常执行&lt;code&gt;exec -it&lt;/code&gt;,&lt;code&gt;nsenter -n -t&lt;/code&gt;进入namespace， 但是对于cgroup 的机制并不了解，cgroup 主要包括子系统（subsystem）、hierarchy（层级）、控制族群（control group）、任务（task）。每次看cgroup的介绍，hierarchy ，control group 的概念让笔者困扰了很久，终于有一天大概懂了，在此记录一下。后续如果有机会还想看下cgroup 的文件系统具体实现。&lt;/p&gt;
+&lt;h3 id=&#34;关系&#34;&gt;关系&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;每个task 需要加入所有hierarchy&lt;/li&gt;
+&lt;li&gt;一个子系统最多只能附加到一个层级；&lt;/li&gt;
+&lt;li&gt;一个层级可以附加多个子系统；&lt;/li&gt;
+&lt;li&gt;一个任务可以是多个 cgroup 的成员，但是这些 cgroup 必须在不同的层级；&lt;/li&gt;
+&lt;li&gt;系统中的进程（任务）创建子进程（任务）时，该子任务自动成为其父进程所在 cgroup 的成员。然后可根据需要将该子任务移动到不同的 cgroup 中，但开始时它总是继承其父任务的 cgroup。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;图 1. CGroup 层级图&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图1&lt;/center&gt;
+&lt;p&gt;&lt;img src=&#34;2.png&#34; alt=&#34;cgroups层级结构示意图&#34;&gt;&lt;/p&gt;
+&lt;center&gt;图2&lt;/center&gt;
+&lt;h3 id=&#34;子系统&#34;&gt;子系统&lt;/h3&gt;
+&lt;p&gt;一个子系统对应一种操作系统资源，主要包括：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;cpu 子系统，主要限制进程的 cpu 使用率。&lt;/li&gt;
+&lt;li&gt;cpuacct 子系统，可以统计 cgroups 中的进程的 cpu 使用报告。&lt;/li&gt;
+&lt;li&gt;cpuset 子系统，可以为 cgroups 中的进程分配单独的 cpu 节点或者内存节点。&lt;/li&gt;
+&lt;li&gt;memory 子系统，可以限制进程的 memory 使用量。&lt;/li&gt;
+&lt;li&gt;blkio 子系统，可以限制进程的块设备 io。&lt;/li&gt;
+&lt;li&gt;devices 子系统，可以控制进程能够访问某些设备。&lt;/li&gt;
+&lt;li&gt;net_cls 子系统，可以标记 cgroups 中进程的网络数据包，然后可以使用 tc 模块（traffic control）对数据包进行控制。&lt;/li&gt;
+&lt;li&gt;freezer 子系统，可以挂起或者恢复 cgroups 中的进程。&lt;/li&gt;
+&lt;li&gt;ns 子系统，可以使不同 cgroups 下面的进程使用不同的 namespace。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;层级hierarchy&#34;&gt;层级（hierarchy）&lt;/h3&gt;
+&lt;p&gt;一个 hierarchy 可以与多个子系统对应，但是一个子系统只能与一个hierarchy对应。图二可以看到hierarchy1 对应两个子系统，hierarchy2 对应一个子系统。&lt;/p&gt;
+&lt;h3 id=&#34;控制族群control-group&#34;&gt;控制族群（control group）&lt;/h3&gt;
+&lt;p&gt;从上图可以看到 control group 是hierarchy中组成树的节点，子节点可以默认继承父节点的配置，也可以自定义参数。因此参数非常灵活。&lt;/p&gt;
+&lt;h3 id=&#34;任务task&#34;&gt;任务（task）&lt;/h3&gt;
+&lt;p&gt;task即一个进程&lt;/p&gt;
+&lt;h2 id=&#34;cgroup-v2&#34;&gt;cgroup v2&lt;/h2&gt;
+&lt;p&gt;在cgroup v2中一个操作系统中只有一个hierarchy，包含了各种子系统S&lt;/p&gt;
+&lt;h3 id=&#34;参考&#34;&gt;参考&lt;/h3&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/caoxiaojian/p/5633430.html&#34;&gt;https://www.cnblogs.com/caoxiaojian/p/5633430.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/bincoding/p/16465804.html&#34;&gt;https://www.cnblogs.com/bincoding/p/16465804.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://tech.meituan.com/2015/03/31/cgroups.html&#34;&gt;https://tech.meituan.com/2015/03/31/cgroups.html&lt;/a&gt;&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/linux/" term="linux" label="linux" />
+                            
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/cgoup/" term="cgoup" label="cgoup" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">驱逐launcher pod与kubevirt虚机迁移的关系</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubevirt/vmeviction/" />
