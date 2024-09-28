@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-09-28T15:55:38&#43;08:00</updated>
+    <updated>2024-09-28T15:58:02&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -17,10 +17,10 @@
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
         <entry>
-            <title type="text">cgroup</title>
+            <title type="text">cgroup 基本概念分享</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/linux/cgroup/cgroup1/" />
             <id>http://longchuanzheng.github.io/posts/linux/cgroup/cgroup1/</id>
-            <updated>2024-09-28T15:55:19&#43;08:00</updated>
+            <updated>2024-09-28T15:57:49&#43;08:00</updated>
             <published>2024-09-28T10:08:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
