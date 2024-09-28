@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2024-09-28T15:58:02&#43;08:00</updated>
+    <updated>2024-09-28T16:00:24&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -20,7 +20,7 @@
             <title type="text">cgroup 基本概念分享</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/linux/cgroup/cgroup1/" />
             <id>http://longchuanzheng.github.io/posts/linux/cgroup/cgroup1/</id>
-            <updated>2024-09-28T15:57:49&#43;08:00</updated>
+            <updated>2024-09-28T15:58:45&#43;08:00</updated>
             <published>2024-09-28T10:08:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -62,9 +62,9 @@
 &lt;p&gt;从上图可以看到 control group 是hierarchy中组成树的节点，子节点可以默认继承父节点的配置，也可以自定义参数。因此参数非常灵活。&lt;/p&gt;
 &lt;h3 id=&#34;任务task&#34;&gt;任务（task）&lt;/h3&gt;
 &lt;p&gt;task即一个进程&lt;/p&gt;
-&lt;h2 id=&#34;cgroup-v2&#34;&gt;cgroup v2&lt;/h2&gt;
+&lt;h3 id=&#34;cgroup-v2&#34;&gt;cgroup v2&lt;/h3&gt;
 &lt;p&gt;在cgroup v2中一个操作系统中只有一个hierarchy，包含了各种子系统S&lt;/p&gt;
-&lt;h3 id=&#34;参考&#34;&gt;参考&lt;/h3&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/caoxiaojian/p/5633430.html&#34;&gt;https://www.cnblogs.com/caoxiaojian/p/5633430.html&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/bincoding/p/16465804.html&#34;&gt;https://www.cnblogs.com/bincoding/p/16465804.html&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://tech.meituan.com/2015/03/31/cgroups.html&#34;&gt;https://tech.meituan.com/2015/03/31/cgroups.html&lt;/a&gt;&lt;/p&gt;
