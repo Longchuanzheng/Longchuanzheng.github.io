@@ -23,10 +23,162 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Sun, 29 Sep 2024 09:40:30 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 01 Nov 2024 17:30:32 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
+        
+            <item>
+                <title>wait.Until 方法</title>
+                <link>http://longchuanzheng.github.io/posts/go/wait/until/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/go/wait/until/</guid>
+                <pubDate>Fri, 01 Nov 2024 15:28:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;wait.Until 方法可以按period频率执行 f 函数或方法，具体来说Until 会执行f 并在f 执行完成后等待period 然后继续执行f。直到stopCh 接受到消息。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func Until(f func(), period time.Duration, stopCh &amp;lt;-chan struct{}) {
+   JitterUntil(f, period, 0.0, true, stopCh)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;使用实例: 间隔1s执行一次 c.runWorker&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;wait.Until(c.runWorker, time.Second, stopCh)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Until 调用了 JitterUntil，sliding 设为&#39;true&#39;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// JitterUntil loops until stop channel is closed, running f every period.
+//
+// If jitterFactor is positive, the period is jittered before every run of f.
+// If jitterFactor is not positive, the period is unchanged and not jittered.
+//
+// If sliding is true, the period is computed after f runs. If it is false then
+// period includes the runtime for f.
+//
+// Close stopCh to stop. f may not be invoked if stop channel is already
+// closed. Pass NeverStop to if you don&amp;#39;t want it stop.
+func JitterUntil(f func(), period time.Duration, jitterFactor float64, sliding bool, stopCh &amp;lt;-chan struct{}) {
+   BackoffUntil(f, NewJitteredBackoffManager(period, jitterFactor, &amp;amp;clock.RealClock{}), sliding, stopCh)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;即执行BackoffUntil，其中根据NewJitteredBackoffManager 生成一个BackoffManagerImpl&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// NewJitteredBackoffManager returns a BackoffManager that backoffs with given duration plus given jitter. If the jitter
+// is negative, backoff will not be jittered.
+func NewJitteredBackoffManager(duration time.Duration, jitter float64, c clock.Clock) BackoffManager {
+   return &amp;amp;jitteredBackoffManagerImpl{
+      clock:        c,
+      duration:     duration,
+      jitter:       jitter,
+      backoffTimer: nil,
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;BackoffUntil会在一个for 循环中首先判断是否接收到了stopCh，如果没有接收到则执行f (sliding 为true，如果sliding 为 false 则在执行f 前给timer 赋值)，然后执行backoff.Backoff() 给timer赋值。执行完成f 以后，等待timer 到期，然后继续执行。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// BackoffUntil loops until stop channel is closed, run f every duration given by BackoffManager.
+//
+// If sliding is true, the period is computed after f runs. If it is false then
+// period includes the runtime for f.
+func BackoffUntil(f func(), backoff BackoffManager, sliding bool, stopCh &amp;lt;-chan struct{}) {
+   var t clock.Timer
+   for {
+      select {
+      case &amp;lt;-stopCh:
+         return
+      default:
+      }
+
+      if !sliding {
+         t = backoff.Backoff()
+      }
+
+      func() {
+         defer runtime.HandleCrash()
+         f()
+      }()
+
+      if sliding {
+         t = backoff.Backoff()
+      }
+
+      // NOTE: b/c there is no priority selection in golang
+      // it is possible for this to race, meaning we could
+      // trigger t.C and stopCh, and t.C select falls through.
+      // In order to mitigate we re-check stopCh at the beginning
+      // of every loop to prevent extra executions of f().
+      select {
+      case &amp;lt;-stopCh:
+         if !t.Stop() {
+            &amp;lt;-t.C()
+         }
+         return
+      case &amp;lt;-t.C():
+      }
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;backoff.Backoff() 首先需要获得 getNextBackoff()，jitter 是抖动参数，j.jitter &amp;gt; 0.0 则需要将duration 抖动，duration+=随机的一个零到一的数乘jitter。然后更新jitteredBackoffManagerImpl.backoffTimer 并返回。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;type jitteredBackoffManagerImpl struct {
+	clock        clock.Clock
+	duration     time.Duration
+	jitter       float64
+	backoffTimer clock.Timer
+}
+func (j *jitteredBackoffManagerImpl) getNextBackoff() time.Duration {
+   jitteredPeriod := j.duration
+   if j.jitter &amp;gt; 0.0 {
+      jitteredPeriod = Jitter(j.duration, j.jitter)
+   }
+   return jitteredPeriod
+}
+
+// Backoff implements BackoffManager.Backoff, it returns a timer so caller can block on the timer for jittered backoff.
+// The returned timer must be drained before calling Backoff() the second time
+func (j *jitteredBackoffManagerImpl) Backoff() clock.Timer {
+   backoff := j.getNextBackoff()
+   if j.backoffTimer == nil {
+      j.backoffTimer = j.clock.NewTimer(backoff)
+   } else {
+      j.backoffTimer.Reset(backoff)
+   }
+   return j.backoffTimer
+}
+
+// Jitter returns a time.Duration between duration and duration + maxFactor *
+// duration.
+//
+// This allows clients to avoid converging on periodic behavior. If maxFactor
+// is 0.0, a suggested default value will be chosen.
+func Jitter(duration time.Duration, maxFactor float64) time.Duration {
+	if maxFactor &amp;lt;= 0.0 {
+		maxFactor = 1.0
+	}
+	wait := duration + time.Duration(rand.Float64()*maxFactor*float64(duration))
+	return wait
+}
+&lt;/code&gt;&lt;/pre&gt;</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/golang/">golang</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>cgroup 基本概念分享</title>
