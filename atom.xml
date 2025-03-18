@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-03-18T20:14:19&#43;08:00</updated>
+    <updated>2025-03-18T21:13:00&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -16,6 +16,261 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">Webhook机制初探</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/webhook/webhook/" />
+            <id>http://longchuanzheng.github.io/posts/kubernetes/webhook/webhook/</id>
+            <updated>2025-03-18T21:12:37&#43;08:00</updated>
+            <published>2025-03-18T21:12:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">kubernetes 提供原生的准入webhook，在对kubernetes 集群进行请求时，注册的web……</summary>
+            
+                <content type="html">&lt;p&gt;kubernetes 提供原生的准入webhook，在对kubernetes 集群进行请求时，注册的webhook 会执行。在编写基于 kubernetes的应用时，可以利用kubernetes 原生 webhook 来实现某些功能。webhook 包括两种mutatingwebhook 和validatingwebhook，执行顺序上前者先于后者。本文主要介绍如何实践，基于kubevirt代码。&lt;/p&gt;
+&lt;h2 id=&#34;主要实现&#34;&gt;主要实现&lt;/h2&gt;
+&lt;h3 id=&#34;webhookconfiguration&#34;&gt;WebhookConfiguration&lt;/h3&gt;
+&lt;p&gt;创建对应的MutatingWebhookConfiguration/ValidatingWebhookConfiguration&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func NewVirtAPIValidatingWebhookConfiguration(installNamespace string) *admissionregistrationv1.ValidatingWebhookConfiguration {
+...
+	return &amp;amp;admissionregistrationv1.ValidatingWebhookConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: admissionregistrationv1.SchemeGroupVersion.String(),
+			Kind:       &amp;#34;ValidatingWebhookConfiguration&amp;#34;,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: VirtAPIValidatingWebhookName,
+			Labels: map[string]string{
+				virtv1.AppLabel:       VirtAPIValidatingWebhookName,
+				virtv1.ManagedByLabel: virtv1.ManagedByLabelOperatorValue,
+			},
+			Annotations: map[string]string{
+				certificatesSecretAnnotationKey: VirtApiCertSecretName,
+			},
+		},
+		Webhooks: []admissionregistrationv1.ValidatingWebhook{
+			{
+				Name:                    &amp;#34;virt-launcher-eviction-interceptor.kubevirt.io&amp;#34;,
+				AdmissionReviewVersions: []string{&amp;#34;v1&amp;#34;, &amp;#34;v1beta1&amp;#34;},
+				// We don&amp;#39;t want to block evictions in the cluster in a case where this webhook is down.
+				// The eviction of virt-launcher will still be protected by our pdb.
+				FailurePolicy:  &amp;amp;ignorePolicy,
+				TimeoutSeconds: &amp;amp;defaultTimeoutSeconds,
+				SideEffects:    &amp;amp;sideEffectNoneOnDryRun,
+				Rules: []admissionregistrationv1.RuleWithOperations{{
+					Operations: []admissionregistrationv1.OperationType{
+						admissionregistrationv1.OperationAll,
+					},
+					Rule: admissionregistrationv1.Rule{
+						APIGroups:   []string{&amp;#34;&amp;#34;},
+						APIVersions: []string{&amp;#34;v1&amp;#34;},
+						Resources:   []string{&amp;#34;pods/eviction&amp;#34;},
+					},
+				}},
+				ClientConfig: admissionregistrationv1.WebhookClientConfig{
+					Service: &amp;amp;admissionregistrationv1.ServiceReference{
+						Namespace: installNamespace,
+						Name:      VirtApiServiceName,
+						Path:      &amp;amp;launcherEvictionValidatePath,
+					},
+				},
+			},
+		},
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;ruler&#34;&gt;Ruler&lt;/h4&gt;
+&lt;p&gt;其中指定了Ruler:&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;Rules: []admissionregistrationv1.RuleWithOperations{{
+   Operations: []admissionregistrationv1.OperationType{
+      admissionregistrationv1.OperationAll,
+   },
+   Rule: admissionregistrationv1.Rule{
+      APIGroups:   []string{&amp;#34;&amp;#34;},
+      APIVersions: []string{&amp;#34;v1&amp;#34;},
+      Resources:   []string{&amp;#34;pods/eviction&amp;#34;},
+   },
+}},
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;包括webhook 针对的操作，包括：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;const (
+	OperationAll OperationType = &amp;#34;*&amp;#34;
+	Create       OperationType = &amp;#34;CREATE&amp;#34;
+	Update       OperationType = &amp;#34;UPDATE&amp;#34;
+	Delete       OperationType = &amp;#34;DELETE&amp;#34;
+	Connect      OperationType = &amp;#34;CONNECT&amp;#34;
+)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;以及针对的资源，如pods/eviction，及请求pods/eviction时该webhook 会执行。&lt;/p&gt;
+&lt;h4 id=&#34;clientconfig&#34;&gt;ClientConfig&lt;/h4&gt;
+&lt;p&gt;ClientConfig中指定了webhook的逻辑提供放，这里指定了svc 和对应的路径。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;ClientConfig: admissionregistrationv1.WebhookClientConfig{
+					Service: &amp;amp;admissionregistrationv1.ServiceReference{
+						Namespace: installNamespace,
+						Name:      VirtApiServiceName,
+						Path:      &amp;amp;launcherEvictionValidatePath,
+					},
+				},
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;webhook-实现&#34;&gt;WebHook 实现&lt;/h3&gt;
+&lt;h4 id=&#34;service&#34;&gt;service&lt;/h4&gt;
+&lt;p&gt;对应的svc如下：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubevirt.io/customizer-identifier: d21d5e190f84b4ed8185b3d564eda172a7a5930d
+    kubevirt.io/generation: &amp;#34;36&amp;#34;
+    kubevirt.io/install-strategy-identifier: 5eff7249592ed22462e8d8fdce34a75efe9aceb8
+    kubevirt.io/install-strategy-registry: registry.paas/zhuanlan
+    kubevirt.io/install-strategy-version: 3-18-4
+  creationTimestamp: &amp;#34;2024-08-28T09:13:14Z&amp;#34;
+  labels:
+    app.kubernetes.io/component: kubevirt
+    app.kubernetes.io/managed-by: virt-operator
+    kubevirt.io: virt-api
+  name: virt-api
+  namespace: kubevirt
+  resourceVersion: &amp;#34;265779823&amp;#34;
+  uid: 712a5f27-cc62-4fd0-9e21-3cba2939b706
+spec:
+  clusterIP: 10.233.16.52
+  clusterIPs:
+  - 10.233.16.52
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    kubevirt.io: virt-api
+  sessionAffinity: None
+  type: ClusterIP
+&lt;/code&gt;&lt;/pre&gt;&lt;h4 id=&#34;路由&#34;&gt;路由&lt;/h4&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;http.HandleFunc(components.VMMutatePath, func(w http.ResponseWriter, r *http.Request) {
+   mutating_webhook.ServeVMs(w, r, app.clusterConfig)
+})
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;mutating逻辑&#34;&gt;Mutating逻辑&lt;/h5&gt;
+&lt;p&gt;这里vm 的create请求会通过setDefaultMachineType(&amp;amp;vm)，渲染出未设置的默认值。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;
+func (mutator *VMsMutator) Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
+	if !webhookutils.ValidateRequestResource(ar.Request.Resource, webhooks.VirtualMachineGroupVersionResource.Group, webhooks.VirtualMachineGroupVersionResource.Resource) {
+		err := fmt.Errorf(&amp;#34;expect resource to be &amp;#39;%s&amp;#39;&amp;#34;, webhooks.VirtualMachineGroupVersionResource.Resource)
+		return webhookutils.ToAdmissionResponseError(err)
+	}
+
+	if resp := webhookutils.ValidateSchema(v1.VirtualMachineGroupVersionKind, ar.Request.Object.Raw); resp != nil {
+		return resp
+	}
+
+	raw := ar.Request.Object.Raw
+	vm := v1.VirtualMachine{}
+
+	err := json.Unmarshal(raw, &amp;amp;vm)
+	if err != nil {
+		return webhookutils.ToAdmissionResponseError(err)
+	}
+
+	// Set VM defaults
+	log.Log.Object(&amp;amp;vm).V(4).Info(&amp;#34;Apply defaults&amp;#34;)
+	mutator.setDefaultMachineType(&amp;amp;vm)
+
+	var patch []utiltypes.PatchOperation
+	var value interface{}
+	value = vm.Spec
+	patch = append(patch, utiltypes.PatchOperation{
+		Op:    &amp;#34;replace&amp;#34;,
+		Path:  &amp;#34;/spec&amp;#34;,
+		Value: value,
+	})
+
+	value = vm.ObjectMeta
+	patch = append(patch, utiltypes.PatchOperation{
+		Op:    &amp;#34;replace&amp;#34;,
+		Path:  &amp;#34;/metadata&amp;#34;,
+		Value: value,
+	})
+
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		log.Log.Reason(err).Error(&amp;#34;admission failed to marshall patch to JSON&amp;#34;)
+		return &amp;amp;admissionv1.AdmissionResponse{
+			Result: &amp;amp;metav1.Status{
+				Message: err.Error(),
+				Code:    http.StatusInternalServerError,
+			},
+		}
+	}
+
+	jsonPatchType := admissionv1.PatchTypeJSONPatch
+	return &amp;amp;admissionv1.AdmissionResponse{
+		Allowed:   true,
+		Patch:     patchBytes,
+		PatchType: &amp;amp;jsonPatchType,
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h5 id=&#34;validating逻辑&#34;&gt;Validating逻辑&lt;/h5&gt;
+&lt;p&gt;这段validate 逻辑中，当vm.Status.RestoreInProgress != nil  则不允许vm.RunStrategy() 变成除Halted以外的值。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;
+func validateRestoreStatus(ar *admissionv1.AdmissionRequest, vm *v1.VirtualMachine) []metav1.StatusCause {
+	if ar.Operation != admissionv1.Update || vm.Status.RestoreInProgress == nil {
+		return nil
+	}
+
+	oldVM := &amp;amp;v1.VirtualMachine{}
+	if err := json.Unmarshal(ar.OldObject.Raw, oldVM); err != nil {
+		return []metav1.StatusCause{{
+			Type:    metav1.CauseTypeUnexpectedServerResponse,
+			Message: &amp;#34;Could not fetch old VM&amp;#34;,
+		}}
+	}
+
+	if !equality.Semantic.DeepEqual(oldVM.Spec, vm.Spec) {
+		strategy, _ := vm.RunStrategy()
+		if strategy != v1.RunStrategyHalted {
+			return []metav1.StatusCause{{
+				Type:    metav1.CauseTypeFieldValueNotSupported,
+				Message: fmt.Sprintf(&amp;#34;Cannot start VM until restore %q completes&amp;#34;, *vm.Status.RestoreInProgress),
+				Field:   k8sfield.NewPath(&amp;#34;spec&amp;#34;).String(),
+			}}
+		}
+	}
+
+	return nil
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;参考：&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/zh-cn/docs/reference/kubernetes-api/extend-resources/mutating-webhook-configuration-v1/&#34;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/zh-cn/docs/reference/kubernetes-api/extend-resources/validating-webhook-configuration-v1/&#34;&gt;&lt;/a&gt;&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/kubernetes/" term="kubernetes" label="kubernetes" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">ServiceAccount初探</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/serviceaccount/serviceaccount/" />
