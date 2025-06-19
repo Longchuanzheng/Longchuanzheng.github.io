@@ -3,21 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2025-03-18T21:12:37+08:00</lastmod>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/knowledge/</loc>
-    <lastmod>2025-03-18T21:12:37+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/categories/kubernetes/</loc>
-    <lastmod>2025-03-18T21:12:37+08:00</lastmod>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2025-03-18T21:12:37+08:00</lastmod>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/network/</loc>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2025-03-18T21:12:37+08:00</lastmod>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/</loc>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/network/bgp-evpn/</loc>
+    <lastmod>2025-06-19T14:14:05+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/kubernetes/</loc>
     <lastmod>2025-03-18T21:12:37+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubernetes/webhook/webhook/</loc>

@@ -23,10 +23,154 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Thu, 19 Jun 2025 14:08:27 &#43;0800</lastBuildDate>
+        <lastBuildDate>Thu, 19 Jun 2025 14:14:18 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
+        
+            <item>
+                <title>不求甚解之EVPN和BGP协同</title>
+                <link>http://longchuanzheng.github.io/posts/network/bgp-evpn/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/network/bgp-evpn/</guid>
+                <pubDate>Thu, 19 Jun 2025 14:14:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;当了解vpn时发现目前evpn协议比较时，各种文档中都有提到一点：EVPN统一了各种VPN业务的控制面，利用&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html&#34;&gt;BGP&lt;/a&gt;扩展协议来传递二层或三层的可达性信息，实现了转发面和控制面的分离。因此evpn和bgp 有着紧密的关系。笔者不求甚解的阅读了vpn和bgp的相关资料，大致了解了这句话的含义。&lt;/p&gt;
+&lt;h2 id=&#34;传统二层vpn的局限性&#34;&gt;传统二层vpn的局限性&lt;/h2&gt;
+&lt;p&gt;evpn是一种用于二层网络互联的VPN技术。和传统的二层vpn技术（如VPLS）比较，VPLS是一种早期出现的&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/MPLS.html&#34;&gt;MPLS&lt;/a&gt; &lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/VPN.html&#34;&gt;VPN&lt;/a&gt;技术，被广泛的应用在用户&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E6%95%B0%E6%8D%AE%E4%B8%AD%E5%BF%83.html&#34;&gt;数据中心&lt;/a&gt;互连场景，能为企业用户提供多点到多点的广域&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E4%BB%A5%E5%A4%AA%E7%BD%91.html&#34;&gt;以太网&lt;/a&gt;服务。但是由于VPLS技术具有一定的局限性，使其无法满足大规模复杂数据中心的需求。&lt;/p&gt;
+&lt;p&gt;VPLS 需要转发节点需要集群中其他节点的mac，传统做法中若mac信息缺失则需要泛洪广播去学习。如图所示，难点包括：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;传统的L2VPN在数据中心互联网络部署拓扑图&#34;&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;网络部署难&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;PE设备要学习所有CE设备的MAC地址，MAC的表容量是有限的。且由于存在大量的手工配置，对PE设备的规格要求很高。&lt;/p&gt;
+&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;适用的网络规模有限&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;PE设备间需要建立全连接PW使VPLS不适合大规模网络。&lt;/p&gt;
+&lt;p&gt;没有控制平面，一旦MAC地址变化或故障发生切换，需要重新泛洪学习L2转发表，收敛性差。&lt;/p&gt;
+&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;链路带宽利用率低&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;为了避免CE侧到PE侧产生环路，CE侧到PE侧只支持单活模式，而不支持多活模式，这样就使得链路的利用率很低。&lt;/p&gt;
+&lt;p&gt;这里介绍一下pe,ce,pw的概念:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;ce , pe属于mpls vpn里的概念。VPN概念中，把整个网络中的路由器分为三类：用户边缘路由器（CE）、运营商边缘路由器（PE）和运营商骨干路由器（P）；其中，PE充当IP VPN接入路由器。
+PE(Provider Edge)，即Provide的边缘设备，服务提供商骨干网的边缘路由器，它相当于标签边缘路由器（LER）。PE路由器连接CE路由器和P路由器，是最重要的网络节点。用户的流量通过PE路由器流入用户网络，或者通过PE路由器流到MPLS骨干网。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;CE(Customer Edge)，用户边缘设备，服务提供商所连接的用户端路由器。CE路由器通过连接一个或多个PE路由器，为用户提供服务接入。CE路由器通常是一台IP路由器，它与连接的PE路由器建立邻接关系。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;用户站点：用户端网络的总称，一个用户站点可以通过一条或多条链路连接服务提供商的骨干网络。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;伪(Pseudo)线(Wire) -- 很形象的名字&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;2.jpg&#34; alt=&#34;pw&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;bgp-作为-vpn-mac地址控制面&#34;&gt;bgp 作为 vpn mac地址控制面&lt;/h2&gt;
+&lt;p&gt;网络中节点通过bgp协议去维护网络中其他节点的mac地址信息。，因此传统的泛洪学习被替换为通过bgp拓展协议维护。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;3.png&#34; alt=&#34;EVPN技术与传统的L2VPN技术对比&#34;&gt;&lt;/p&gt;
+&lt;p&gt;#Deepseek 获取的传统二层网络和evpn+bgp 对未知 MAC 处理的对比&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;&lt;strong&gt;场景&lt;/strong&gt;&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;&lt;strong&gt;传统以太网（如交换机）&lt;/strong&gt;&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;&lt;strong&gt;EVPN + BGP&lt;/strong&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;未知 MAC 的处理&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;全网泛洪（Flooding）&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;默认丢弃，或按策略选择性泛洪&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;广播/ARP 处理&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;全网泛洪&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;通过 EVPN 路由控制泛洪范围&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;传统的BGP-4只能管理&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html&#34;&gt;IPv4&lt;/a&gt;&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IP%E8%B7%AF%E7%94%B1.html&#34;&gt;单播路由&lt;/a&gt;信息，对于使用其它网络层协议（如&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv6.html&#34;&gt;IPv6&lt;/a&gt;、&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E7%BB%84%E6%92%AD.html&#34;&gt;组播&lt;/a&gt;等）的应用就受到一定限制。&lt;/p&gt;
+&lt;p&gt;为了提供对多种网络层协议的支持，IETF（Internet Engineering Task Force）对BGP-4进行了扩展，形成MP-BGP（Multi-protocol Extensions for Border Gateway Protocol）。MP-BGP向前兼容，即支持BGP扩展的&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E8%B7%AF%E7%94%B1%E5%99%A8.html&#34;&gt;路由器&lt;/a&gt;与不支持BGP扩展的路由器可以互通。&lt;/p&gt;
+&lt;p&gt;BGP-EVPN地址族视图、BGP多实例&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/EVPN.html&#34;&gt;EVPN&lt;/a&gt;地址族视图等EVPN相关地址族主要用于配置BGP EVPN对等体，应用于EVPN VPLS、EVPN VPWS以及EVPN L3VPN。EVPN（Ethernet Virtual Private Network）是一种用于二层网络互联的VPN技术。EVPN技术采用类似于BGP/MPLS IP VPN的机制，在BGP协议的基础上定义了一种新的网络层可达信息NLRI（Network Layer Reachability Information）即EVPN NLRI，EVPN NLRI定义了几种新的BGP EVPN路由类型，用于处在二层网络的不同站点之间的MAC地址学习和发布。&lt;/p&gt;
+&lt;p&gt;BGP EVPN路由有以下几种类型：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;以太自动发现路由（Ethernet Auto-Discovery Route）&lt;/p&gt;
+&lt;p&gt;以太自动发现路由可以向其他的PE通告本端的PE对接入站点的MAC地址是否可达。主要用在快速收敛、冗余模式、别名和水平分割场景，解决多归属网络中的流量&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E8%B4%9F%E8%BD%BD%E5%88%86%E6%8B%85.html&#34;&gt;负载分担&lt;/a&gt;问题。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;MAC/IP地址通告路由（MAC/IP Advertisement Route）：&lt;/p&gt;
+&lt;p&gt;站点的MAC和&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html&#34;&gt;IP&lt;/a&gt;等信息是通过EVPN的MAC/IP地址路由通告的，因此不需要将&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/ARP.html&#34;&gt;ARP&lt;/a&gt;请求泛洪到网络之中，大大的减少了网络中的广播流量，减少了带宽资源的浪费&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;集成&lt;/p&gt;
+&lt;p&gt;多播&lt;/p&gt;
+&lt;p&gt;路由（Inclusive Multicast Route）&lt;/p&gt;
+&lt;p&gt;本端PE要向远端PE发送CE侧收到的广播、&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E7%BB%84%E6%92%AD.html&#34;&gt;组播&lt;/a&gt;和未知的单播地址流量，需要集成多播路由发送多播地址可达信息来实现广播域内的成员互相发现。集成多播路由也要包含创建隧道的属性，PE设备之间，通过集成多播路由可以创建传递数据面流量的隧道。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;以太网&lt;/p&gt;
+&lt;p&gt;段路由（Ethernet Segment Route）&lt;/p&gt;
+&lt;p&gt;用来实现连接到相同CE和PE设备之间相互自动发现，该路由主要用于DF（Designated Forwarder，指定转发者）选举。由于CE多归于多个PE时，避免CE收到重复的流量，只需要有一个PE向CE转发BUM（Broadcast，Unknown Unicast，Multicast，广播、未知单播、组播流量统称），那么就需要在相同ES的PE之间，根据DF来选举出这个PE。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;IP前缀路由（IP Prefix Route）&lt;/p&gt;
+&lt;p&gt;用于EVPN网络接入外部网络。EVPN以IP前缀的形式通告引用的外部路由&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;evpn技术与传统的l2vpn技术对比&#34;&gt;EVPN技术与传统的L2VPN技术对比&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;通过使用EVPN技术，PE设备之间不再需要建立全连接。这是因为在EVPN网络中PE设备之间是通过BGP协议实现相互通信的。BGP协议自带路由反射器功能，所以EVPN支持部署路由反射器，所有PE设备与反射器建立邻居关系，通过路由反射器来反射EVPN路由，大大降低了网络复杂度，减少了网络信令数量。&lt;/li&gt;
+&lt;li&gt;PE设备通过&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/ARP.html&#34;&gt;ARP&lt;/a&gt;协议和MAC/IP地址通告路由分别学习本地和远端的MAC地址信息以及其对应的&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html&#34;&gt;IP地址&lt;/a&gt;，并将这些信息缓存至本地。当PE设备再收到其他ARP请求后，将先根据ARP请求中的目的IP地址查找本地缓存的MAC与IP地址的对应信息，如果查找到对应信息，PE将返回ARP响应报文，避免ARP请求报文向其他PE设备广播，减少网络资源消耗。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;bgp:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html&#34;&gt;https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;evpn&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://support.huawei.com/enterprise/zh/doc/EDOC1100136773&#34;&gt;https://support.huawei.com/enterprise/zh/doc/EDOC1100136773&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/EVPN.html&#34;&gt;https://info.support.huawei.com/info-finder/encyclopedia/zh/EVPN.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;pe,ce:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://blog.csdn.net/qq_41959899/article/details/107594000&#34;&gt;https://blog.csdn.net/qq_41959899/article/details/107594000&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/zafu/p/8494481.html&#34;&gt;https://www.cnblogs.com/zafu/p/8494481.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;pw:&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://zhuanlan.zhihu.com/p/661278721&#34;&gt;https://zhuanlan.zhihu.com/p/661278721&lt;/a&gt;&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/network/">network</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>Webhook机制初探</title>
