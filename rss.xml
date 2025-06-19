@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Thu, 19 Jun 2025 14:14:18 &#43;0800</lastBuildDate>
+        <lastBuildDate>Thu, 19 Jun 2025 14:17:41 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -112,14 +112,11 @@ PE(Provider Edge)，即Provide的边缘设备，服务提供商骨干网的边�
 &lt;p&gt;站点的MAC和&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html&#34;&gt;IP&lt;/a&gt;等信息是通过EVPN的MAC/IP地址路由通告的，因此不需要将&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/ARP.html&#34;&gt;ARP&lt;/a&gt;请求泛洪到网络之中，大大的减少了网络中的广播流量，减少了带宽资源的浪费&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;集成&lt;/p&gt;
-&lt;p&gt;多播&lt;/p&gt;
-&lt;p&gt;路由（Inclusive Multicast Route）&lt;/p&gt;
+&lt;p&gt;集成多播路由（Inclusive Multicast Route）&lt;/p&gt;
 &lt;p&gt;本端PE要向远端PE发送CE侧收到的广播、&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/%E7%BB%84%E6%92%AD.html&#34;&gt;组播&lt;/a&gt;和未知的单播地址流量，需要集成多播路由发送多播地址可达信息来实现广播域内的成员互相发现。集成多播路由也要包含创建隧道的属性，PE设备之间，通过集成多播路由可以创建传递数据面流量的隧道。&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;以太网&lt;/p&gt;
-&lt;p&gt;段路由（Ethernet Segment Route）&lt;/p&gt;
+&lt;p&gt;以太网段路由（Ethernet Segment Route）&lt;/p&gt;
 &lt;p&gt;用来实现连接到相同CE和PE设备之间相互自动发现，该路由主要用于DF（Designated Forwarder，指定转发者）选举。由于CE多归于多个PE时，避免CE收到重复的流量，只需要有一个PE向CE转发BUM（Broadcast，Unknown Unicast，Multicast，广播、未知单播、组播流量统称），那么就需要在相同ES的PE之间，根据DF来选举出这个PE。&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
@@ -128,10 +125,10 @@ PE(Provider Edge)，即Provide的边缘设备，服务提供商骨干网的边�
 &lt;/li&gt;
 &lt;/ol&gt;
 &lt;h2 id=&#34;evpn技术与传统的l2vpn技术对比&#34;&gt;EVPN技术与传统的L2VPN技术对比&lt;/h2&gt;
-&lt;ul&gt;
+&lt;ol&gt;
 &lt;li&gt;通过使用EVPN技术，PE设备之间不再需要建立全连接。这是因为在EVPN网络中PE设备之间是通过BGP协议实现相互通信的。BGP协议自带路由反射器功能，所以EVPN支持部署路由反射器，所有PE设备与反射器建立邻居关系，通过路由反射器来反射EVPN路由，大大降低了网络复杂度，减少了网络信令数量。&lt;/li&gt;
 &lt;li&gt;PE设备通过&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/ARP.html&#34;&gt;ARP&lt;/a&gt;协议和MAC/IP地址通告路由分别学习本地和远端的MAC地址信息以及其对应的&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html&#34;&gt;IP地址&lt;/a&gt;，并将这些信息缓存至本地。当PE设备再收到其他ARP请求后，将先根据ARP请求中的目的IP地址查找本地缓存的MAC与IP地址的对应信息，如果查找到对应信息，PE将返回ARP响应报文，避免ARP请求报文向其他PE设备广播，减少网络资源消耗。&lt;/li&gt;
-&lt;/ul&gt;
+&lt;/ol&gt;
 &lt;p&gt;bgp:&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html&#34;&gt;https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;evpn&lt;/p&gt;

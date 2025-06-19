@@ -57,7 +57,7 @@
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "datePublished": "2025-06-19T14:14:05+08:00",
-        "dateModified": "2025-06-19T14:14:05+08:00",
+        "dateModified": "2025-06-19T14:17:34+08:00",
         "url": "http://longchuanzheng.github.io/posts/network/bgp-evpn/",
         "headline": "不求甚解之EVPN和BGP协同",
         "description": "当了解vpn时发现目前evpn协议比较时，各种文档中都有提到一点：EVPN统一了各种……",
@@ -109,7 +109,7 @@
 <meta property="og:locale" content="zh" /><meta property="og:image" content="http://longchuanzheng.github.io/1.png" />
 <meta property="og:type" content="article" />
     <meta property="article:published_time" content="2025-06-19T14:14:05&#43;08:00" />
-    <meta property="article:modified_time" content="2025-06-19T14:14:05&#43;08:00" />
+    <meta property="article:modified_time" content="2025-06-19T14:17:34&#43;08:00" />
     
     <meta property="article:section" content="posts" />
 
@@ -223,7 +223,7 @@
     
     
         
-        <time datetime="2025-06-19T14:14:05&#43;08:00" class="post-meta-item modified dt-updated"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="icon post-meta-icon"><path d="M400 64h-48V12c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v52H160V12c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v52H48C21.49 64 0 85.49 0 112v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V112c0-26.51-21.49-48-48-48zm-6 400H54a6 6 0 0 1-6-6V160h352v298a6 6 0 0 1-6 6zm-52.849-200.65L198.842 404.519c-4.705 4.667-12.303 4.637-16.971-.068l-75.091-75.699c-4.667-4.705-4.637-12.303.068-16.971l22.719-22.536c4.705-4.667 12.303-4.637 16.97.069l44.104 44.461 111.072-110.181c4.705-4.667 12.303-4.637 16.971.068l22.536 22.718c4.667 4.705 4.636 12.303-.069 16.97z"/></svg>&nbsp;2025.6.19</time>
+        <time datetime="2025-06-19T14:17:34&#43;08:00" class="post-meta-item modified dt-updated"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="icon post-meta-icon"><path d="M400 64h-48V12c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v52H160V12c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v52H48C21.49 64 0 85.49 0 112v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V112c0-26.51-21.49-48-48-48zm-6 400H54a6 6 0 0 1-6-6V160h352v298a6 6 0 0 1-6 6zm-52.849-200.65L198.842 404.519c-4.705 4.667-12.303 4.637-16.971-.068l-75.091-75.699c-4.667-4.705-4.637-12.303.068-16.971l22.719-22.536c4.705-4.667 12.303-4.637 16.97.069l44.104 44.461 111.072-110.181c4.705-4.667 12.303-4.637 16.971.068l22.536 22.718c4.667 4.705 4.636 12.303-.069 16.97z"/></svg>&nbsp;2025.6.19</time>
     
     
     
@@ -330,14 +330,11 @@ PE(Provider Edge)，即Provide的边缘设备，服务提供商骨干网的边�
 <p>站点的MAC和<a href="https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html" target="_blank" rel="noopener">IP</a>等信息是通过EVPN的MAC/IP地址路由通告的，因此不需要将<a href="https://info.support.huawei.com/info-finder/encyclopedia/zh/ARP.html" target="_blank" rel="noopener">ARP</a>请求泛洪到网络之中，大大的减少了网络中的广播流量，减少了带宽资源的浪费</p>
 </li>
 <li>
-<p>集成</p>
-<p>多播</p>
-<p>路由（Inclusive Multicast Route）</p>
+<p>集成多播路由（Inclusive Multicast Route）</p>
 <p>本端PE要向远端PE发送CE侧收到的广播、<a href="https://info.support.huawei.com/info-finder/encyclopedia/zh/%E7%BB%84%E6%92%AD.html" target="_blank" rel="noopener">组播</a>和未知的单播地址流量，需要集成多播路由发送多播地址可达信息来实现广播域内的成员互相发现。集成多播路由也要包含创建隧道的属性，PE设备之间，通过集成多播路由可以创建传递数据面流量的隧道。</p>
 </li>
 <li>
-<p>以太网</p>
-<p>段路由（Ethernet Segment Route）</p>
+<p>以太网段路由（Ethernet Segment Route）</p>
 <p>用来实现连接到相同CE和PE设备之间相互自动发现，该路由主要用于DF（Designated Forwarder，指定转发者）选举。由于CE多归于多个PE时，避免CE收到重复的流量，只需要有一个PE向CE转发BUM（Broadcast，Unknown Unicast，Multicast，广播、未知单播、组播流量统称），那么就需要在相同ES的PE之间，根据DF来选举出这个PE。</p>
 </li>
 <li>
@@ -346,10 +343,10 @@ PE(Provider Edge)，即Provide的边缘设备，服务提供商骨干网的边�
 </li>
 </ol>
 <h2 id="evpn技术与传统的l2vpn技术对比"><a href="#evpn技术与传统的l2vpn技术对比" class="anchor-link"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="icon anchor-icon"><path d="M326.612 185.391c59.747 59.809 58.927 155.698.36 214.59-.11.12-.24.25-.36.37l-67.2 67.2c-59.27 59.27-155.699 59.262-214.96 0-59.27-59.26-59.27-155.7 0-214.96l37.106-37.106c9.84-9.84 26.786-3.3 27.294 10.606.648 17.722 3.826 35.527 9.69 52.721 1.986 5.822.567 12.262-3.783 16.612l-13.087 13.087c-28.026 28.026-28.905 73.66-1.155 101.96 28.024 28.579 74.086 28.749 102.325.51l67.2-67.19c28.191-28.191 28.073-73.757 0-101.83-3.701-3.694-7.429-6.564-10.341-8.569a16.037 16.037 0 0 1-6.947-12.606c-.396-10.567 3.348-21.456 11.698-29.806l21.054-21.055c5.521-5.521 14.182-6.199 20.584-1.731a152.482 152.482 0 0 1 20.522 17.197zM467.547 44.449c-59.261-59.262-155.69-59.27-214.96 0l-67.2 67.2c-.12.12-.25.25-.36.37-58.566 58.892-59.387 154.781.36 214.59a152.454 152.454 0 0 0 20.521 17.196c6.402 4.468 15.064 3.789 20.584-1.731l21.054-21.055c8.35-8.35 12.094-19.239 11.698-29.806a16.037 16.037 0 0 0-6.947-12.606c-2.912-2.005-6.64-4.875-10.341-8.569-28.073-28.073-28.191-73.639 0-101.83l67.2-67.19c28.239-28.239 74.3-28.069 102.325.51 27.75 28.3 26.872 73.934-1.155 101.96l-13.087 13.087c-4.35 4.35-5.769 10.79-3.783 16.612 5.864 17.194 9.042 34.999 9.69 52.721.509 13.906 17.454 20.446 27.294 10.606l37.106-37.106c59.271-59.259 59.271-155.699.001-214.959z"/></svg></a><a href="#contents:evpn技术与传统的l2vpn技术对比" class="headings">EVPN技术与传统的L2VPN技术对比</a></h2>
-<ul>
+<ol>
 <li>通过使用EVPN技术，PE设备之间不再需要建立全连接。这是因为在EVPN网络中PE设备之间是通过BGP协议实现相互通信的。BGP协议自带路由反射器功能，所以EVPN支持部署路由反射器，所有PE设备与反射器建立邻居关系，通过路由反射器来反射EVPN路由，大大降低了网络复杂度，减少了网络信令数量。</li>
 <li>PE设备通过<a href="https://info.support.huawei.com/info-finder/encyclopedia/zh/ARP.html" target="_blank" rel="noopener">ARP</a>协议和MAC/IP地址通告路由分别学习本地和远端的MAC地址信息以及其对应的<a href="https://info.support.huawei.com/info-finder/encyclopedia/zh/IPv4.html" target="_blank" rel="noopener">IP地址</a>，并将这些信息缓存至本地。当PE设备再收到其他ARP请求后，将先根据ARP请求中的目的IP地址查找本地缓存的MAC与IP地址的对应信息，如果查找到对应信息，PE将返回ARP响应报文，避免ARP请求报文向其他PE设备广播，减少网络资源消耗。</li>
-</ul>
+</ol>
 <p>bgp:</p>
 <p><a href="https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html" target="_blank" rel="noopener">https://info.support.huawei.com/info-finder/encyclopedia/zh/BGP.html</a></p>
 <p>evpn</p>
@@ -388,7 +385,7 @@ PE(Provider Edge)，即Provide的边缘设备，服务提供商骨干网的边�
 
         
     <div class="updated-badge-container">
-        <span title="Updated @ 2025-06-19 14:14:05 CST" style="cursor:help">
+        <span title="Updated @ 2025-06-19 14:17:34 CST" style="cursor:help">
 
 <svg xmlns="http://www.w3.org/2000/svg" width="130" height="20" class="updated-badge"><linearGradient id="b" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="a"><rect width="130" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#a)"><path class="updated-badge-left" d="M0 0h55v20H0z"/><path class="updated-badge-right" d="M55 0h75v20H55z"/><path fill="url(#b)" d="M0 0h130v20H0z"/></g><g fill="#fff" text-anchor="middle" font-size="110"><text x="285" y="150" fill="#010101" fill-opacity=".3" textLength="450" transform="scale(.1)">updated</text><text x="285" y="140" textLength="450" transform="scale(.1)">updated</text><text x="915" y="150" fill="#010101" fill-opacity=".3" textLength="650" transform="scale(.1)">2025-06-19</text><text x="915" y="140" textLength="650" transform="scale(.1)">2025-06-19</text></g></svg>
         </span></div>
