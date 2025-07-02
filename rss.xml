@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Wed, 02 Jul 2025 09:57:05 &#43;0800</lastBuildDate>
+        <lastBuildDate>Wed, 02 Jul 2025 10:04:37 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -7840,8 +7840,8 @@ https://github.com/ScoopInstaller/Install#readme
         
             <item>
                 <title>epoll为什么优于select</title>
-                <link>http://longchuanzheng.github.io/posts/linux/epollandselect/epollandselect/</link>
-                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/linux/epollandselect/epollandselect/</guid>
+                <link>http://longchuanzheng.github.io/posts/linux/epoll-select/epoll-select/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/linux/epoll-select/epoll-select/</guid>
                 <pubDate>Mon, 01 Jan 0001 00:00:00 &#43;0000</pubDate>
                 
                     <author>zal42@outlook.com (Longchuanzheng)</author>
