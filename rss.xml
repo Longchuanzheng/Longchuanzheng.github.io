@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Wed, 02 Jul 2025 10:04:37 &#43;0800</lastBuildDate>
+        <lastBuildDate>Wed, 02 Jul 2025 10:42:37 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -7893,9 +7893,9 @@ int main(void)
         }
   }
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;1）调用select 后将本进程加入所有socket的等待队列中；&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;./578453-20200526132038555-1457327235.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
 &lt;p&gt;2）当socket 收到数据，中断控制程序将进程从所有的socket的等待队列中移除，进程加入工作队列。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;./578453-20200526132114810-469501470.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;2.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
 &lt;p&gt;3）进程遍历自己监控的socket 列表找到有数据的socket 进行处理。&lt;/p&gt;
 &lt;p&gt;当进程调用 &lt;code&gt;select&lt;/code&gt; 时，内核会执行以下操作：&lt;/p&gt;
 &lt;h4 id=&#34;1-进程阻塞&#34;&gt;&lt;strong&gt;(1) 进程阻塞&lt;/strong&gt;&lt;/h4&gt;
@@ -8015,7 +8015,7 @@ int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;wq：等待队列，如果当前进程没有数据需要处理，会把当前进程描述符和回调函数 default_wake_functon 构造一个等待队列项，放入当前 wq 对待队列，软中断数据就绪的时候会通过 wq 来找到阻塞在 epoll 对象上的用户进程。&lt;/p&gt;
 &lt;p&gt;rbr：一棵红黑树，管理用户进程下添加进来的所有 socket 连接。&lt;/p&gt;
 &lt;p&gt;rdllist：就绪的描述符的链表。当有的连接数据就绪的时候，内核会把就绪的连接放到 rdllist 链表里。这样应用进程只需要判断链表就能找出就绪进程，而不用去遍历整棵树。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;./f6f1d905330e688d2b1e1677fede0e8e.jpg&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;3.jpg&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
 &lt;h4 id=&#34;epoll_ctl&#34;&gt;epoll_ctl&lt;/h4&gt;
 &lt;p&gt;epoll_ctl 函数主要负责把服务端和客户端建立的 socket 连接注册到 eventpoll 对象里，会做三件事：&lt;/p&gt;
 &lt;p&gt;1）创建一个 epitem 对象，主要包含两个字段，分别存放 socket fd 即连接的文件描述符，和所属的 eventpoll 对象的指针；&lt;/p&gt;
@@ -8028,9 +8028,9 @@ int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 &lt;p&gt;2）ep_poll_callback 函数将有数据到达的 epitem 添加到 eventpoll 对象的就绪队列 rdllist 中；&lt;/p&gt;
 &lt;p&gt;3）ep_poll_callback 函数检查 eventpoll 对象的进程等待队列上是否有等待项，通过回调函数 default_wake_func 唤醒这个进程，进行数据的处理；&lt;/p&gt;
 &lt;p&gt;4）当进程醒来后，继续从 epoll_wait 时暂停的代码继续执行，把 rdlist 中就绪的事件返回给用户进程，让用户进程调用 recv 把已经到达内核 socket 等待队列的数据拷贝到用户空间使用。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;./c95be11654d534719cc8828f0c0fb0dc.jpg&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;4.jpg&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
 &lt;h2 id=&#34;三种多路复用模型的特点&#34;&gt;三种多路复用模型的特点&lt;/h2&gt;
-&lt;p&gt;&lt;img src=&#34;./578453-20200526132505493-190390195.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;5.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
 &lt;p&gt;参考：&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/looyee/articles/12964911.html&#34;&gt;https://www.cnblogs.com/looyee/articles/12964911.html&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://cloud.tencent.com/developer/article/2188691&#34;&gt;https://cloud.tencent.com/developer/article/2188691&lt;/a&gt;&lt;/p&gt;
