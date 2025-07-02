@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-07-02T09:24:21&#43;08:00</updated>
+    <updated>2025-07-02T09:57:05&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -7912,8 +7912,8 @@ https://github.com/ScoopInstaller/Install#readme
     
         <entry>
             <title type="text">epoll为什么优于select</title>
-            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/linux/epollandselect/select-%E5%92%8C-epoll/" />
-            <id>http://longchuanzheng.github.io/posts/linux/epollandselect/select-%E5%92%8C-epoll/</id>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/linux/epollandselect/epollandselect/" />
+            <id>http://longchuanzheng.github.io/posts/linux/epollandselect/epollandselect/</id>
             <updated>2025-07-02T09:24:08&#43;08:00</updated>
             <published>0001-01-01T00:00:00&#43;00:00</published>
             <author>
