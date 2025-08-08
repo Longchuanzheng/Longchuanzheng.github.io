@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Wed, 02 Jul 2025 13:34:52 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 08 Aug 2025 17:11:39 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -8066,6 +8066,106 @@ https://github.com/ScoopInstaller/Install#readme
                     
                         
                     
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>k8s 中的 DNS</title>
+                <link>http://longchuanzheng.github.io/posts/kubernetes/corndns-localdns/corndns-localdns/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/kubernetes/corndns-localdns/corndns-localdns/</guid>
+                <pubDate>Mon, 01 Jan 0001 00:00:00 &#43;0000</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;k8s 中主要通过 corndns 和 localdns 配合来提供 svc 的 dns 解析服务。其中corndns 提供了k8s 集群内的dns 服务， 而 localdns 用于提升和优化 dns 性能。&lt;/p&gt;
+&lt;h2 id=&#34;corndns&#34;&gt;corndns&lt;/h2&gt;
+&lt;p&gt;corndns 通过插件，可以轻松扩展功能，在k8s 场景下通过添加kubernetes 插件，实时监控 Service、Pod  的变化，动态生成 A 记录、SRV 记录、PTR 记录等，当收到查询请求时，从内存缓存中返回匹配的记录，无需访问外部数据库。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+           lameduck 5s
+        }
+        ready
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+           pods insecure
+           ttl 30
+        }
+    }
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;通过创建kube-dns   svc 向外提供服务。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kube-dns                                        ClusterIP   10.233.0.10     &amp;lt;none&amp;gt;        53/UDP,53/TCP,9153/TCP
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;localdns&#34;&gt;localdns&lt;/h2&gt;
+&lt;p&gt;在集群中运行 NodeLocal DNSCache 有如下几个好处：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如果本地没有 CoreDNS 实例，则具有最高 DNS QPS 的 Pod 可能必须到另一个节点进行解析，使用 NodeLocal DNSCache 后，拥有本地缓存将有助于改善延迟&lt;/li&gt;
+&lt;li&gt;跳过 iptables DNAT 和连接跟踪将有助于减少 &lt;code&gt;conntrack&lt;/code&gt; 竞争并避免 UDP DNS 条目填满 &lt;code&gt;conntrack&lt;/code&gt; 表（常见的5s超时问题就是这个原因造成的）&lt;/li&gt;
+&lt;li&gt;从本地缓存代理到 kube-dns 服务的连接可以升级到 TCP，TCP conntrack 条目将在连接关闭时被删除，而 UDP 条目必须超时(默认 nfconntrackudp_timeout 是 30 秒)&lt;/li&gt;
+&lt;li&gt;将 DNS 查询从 UDP 升级到 TCP 将减少归因于丢弃的 UDP 数据包和 DNS 超时的尾部等待时间，通常长达 30 秒（3 次重试+ 10 秒超时）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;localdns 作为ds 存在，在节点上创建了一张 nodelocaldns 网卡向外提供服务，默认ip为169.254.20.10。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;309852: nodelocaldns: &amp;lt;BROADCAST,NOARP&amp;gt; mtu 1500 qdisc noop state DOWN group default
+    inet 169.254.20.10/32 scope global nodelocaldns
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;由于localdns 仅维护dns 缓存，若缓存未命中则需要向 corndns 请求，在localdns 的配置中forward 字段显示如果未命中则localdns 会去请求10.233.0.10（corndns 的 svc IP）。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get cm -n kube-system node-local-dns -o yaml
+apiVersion: v1
+data:
+  Corefile: |
+...
+    .:53 {
+        errors
+        cache 30
+        reload
+        loop
+        bind 169.254.20.10
+        forward . 10.233.0.10 {
+                force_tcp
+        }
+        prometheus :9253
+        }
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;dns-server-信息同步到pod&#34;&gt;dns server 信息同步到pod&lt;/h2&gt;
+&lt;p&gt;配置kubelet的配置，在kubelet-config.yaml中添加：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat kubelet-config.yaml
+
+clusterDNS: [169.254.20.10]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这时当pod 中指定：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;dnsPolicy: ClusterFirst
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这时创建pod时，会自动将dns server信息写入/etc/resolv.conf。注意169.254.20.10 是localdns 的ip。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat /etc/resolv.conf
+search cn01.svc.cluster.local svc.cluster.local cluster.local
+nameserver 169.254.20.10
+options ndots:5
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/nodelocaldns/&#34;&gt;https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/nodelocaldns/&lt;/a&gt;&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/kubernetes/">kubernetes</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
                         
                     
                 

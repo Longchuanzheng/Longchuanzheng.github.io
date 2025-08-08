@@ -3,7 +3,7 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2025-07-02T13:34:37+08:00</lastmod>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/linux/epoll-select/epoll-select/</loc>
     <lastmod>2025-07-02T13:34:37+08:00</lastmod>
@@ -12,19 +12,19 @@
     <lastmod>2025-07-02T13:34:37+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/knowledge/</loc>
-    <lastmod>2025-07-02T13:34:37+08:00</lastmod>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/linux/</loc>
     <lastmod>2025-07-02T13:34:37+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2025-07-02T13:34:37+08:00</lastmod>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2025-07-02T13:34:37+08:00</lastmod>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/</loc>
-    <lastmod>2025-07-02T13:34:37+08:00</lastmod>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/network/</loc>
     <lastmod>2025-06-19T14:17:34+08:00</lastmod>
@@ -33,7 +33,7 @@
     <lastmod>2025-06-19T14:17:34+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/kubernetes/</loc>
-    <lastmod>2025-03-18T21:12:37+08:00</lastmod>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/kubernetes/webhook/webhook/</loc>
     <lastmod>2025-03-18T21:12:37+08:00</lastmod>
@@ -145,5 +145,8 @@
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/hello-world/hello-world/</loc>
     <lastmod>2023-02-23T10:29:20+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubernetes/corndns-localdns/corndns-localdns/</loc>
+    <lastmod>2025-08-08T17:10:57+08:00</lastmod>
   </url>
 </urlset>
