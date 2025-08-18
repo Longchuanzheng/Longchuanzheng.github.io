@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-08-08T17:20:12&#43;08:00</updated>
+    <updated>2025-08-18T14:07:13&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -16,6 +16,175 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">Headless SVC 使用</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/headlesssvc/headlesssvc/" />
+            <id>http://longchuanzheng.github.io/posts/kubernetes/headlesssvc/headlesssvc/</id>
+            <updated>2025-08-18T14:07:01&#43;08:00</updated>
+            <published>2025-08-18T14:06:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">在 k8s 中 普通的 svc 会通过 netfilter 将流量从负载均衡到后端pod。而 Headless Service 无需经过 Service 的负载均衡直接提……</summary>
+            
+                <content type="html">&lt;p&gt;在 k8s 中 普通的 svc 会通过 netfilter 将流量从负载均衡到后端pod。而 Headless Service 无需经过 Service 的负载均衡直接提供后端的访问方式。Headless Service 通常和StatefulSet 配合使用，来访问那些有明确分区的服务。在某些情况下和deployment配合也是可行的。在 Headless Service  中也可以不指定selector，并指定ExternalName来访问某个域名（外部内部均可）。&lt;/p&gt;
+&lt;h2 id=&#34;带选择器的headless-service&#34;&gt;带选择器的Headless Service&lt;/h2&gt;
+&lt;p&gt;创建svc 时指定ClusterIP 为 None 并设置 Selector 标签选择器。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get svc prometheus -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: PreferDualStack
+  ports:
+  - name: web
+    port: 9090
+    protocol: TCP
+    targetPort: web
+  selector:
+    app.kubernetes.io/name: prometheus
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 300
+  type: ClusterIP
+status:
+  loadBalancer: {}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;后端对应prometheus 的 statefulset&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get statefulset -n monitoring
+NAME                                 READY   AGE
+prometheus   2/2     47h
+kubectl get pod -n monitoring
+prometheus-prometheus-0                2/2     Running   0          4d23h   10.222.0.148    arm-003   &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+prometheus-prometheus-1                2/2     Running   4          4d23h   10.222.0.149    arm-001   &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;kubernetes 会自动创建EndpointSlice&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt; kubectl get EndpointSlice -n monitoring
+ prometheus-kr5rj            IPv4          9090    10.222.0.148,10.222.0.149             28d
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在pod 中使用nslookup 命令即可dns解析到svc对应后端pod的地址&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;nslookup prometheus.monitoring
+;; Got recursion not available from 169.254.20.10, trying next server
+;; Got recursion not available from 10.233.0.10
+;; Got recursion not available from 169.254.20.10, trying next server
+;; Got recursion not available from 10.233.0.10
+Server:         10.233.0.10
+Address:        10.233.0.10#53
+
+Name:   prometheus.monitoring.svc.cluster.local
+Address: 10.222.0.149
+Name:   rometheus.monitoring.svc.cluster.local
+Address: 10.222.0.148
+;; Got recursion not available from 169.254.20.10, trying next server
+;; Got recursion not available from 10.233.0.10
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;无选择器的headless-service&#34;&gt;无选择器的Headless Service&lt;/h2&gt;
+&lt;p&gt;　　ExternalName Service是Kubernetes中一个特殊的service类型，它不需要指定selector去选择哪些pods实例提供服务，而是使用DNS CNAME机制把服务请求透明地重定向到指定的DNS名称，无论该名称指向的是外部服务还是集群内的其他服务，例如第三方 API 服务、外部数据库，或跨命名空间的内部服务。在配置上，只需将 Service 的 type 设置为 ExternalName 并指定 externalName 字段即可。ExternalName Service 简化了对不同 DNS名称资源的访问配置，使得服务依赖的地址变化对集群内的应用透明，但不提供负载均衡和服务发现功能。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;当访问 ExternalName Service 时，Kubernetes 的 DNS 解析返回一个 CNAME 记录。&lt;/li&gt;
+&lt;li&gt;这个 CNAME 记录将请求重定向到指定的 DNS 名称，从而实现服务的透明重定向。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当创建一个SVC，指定type: ExternalName 并指定 externalName。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;apiVersion: v1
+kind: Service
+metadata:
+  name: baidu
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: www.baidu.com
+  
+#kubectl get svc
+NAME         TYPE           CLUSTER-IP   EXTERNAL-IP     PORT(S)   AGE
+baidu        ExternalName   &amp;lt;none&amp;gt;       www.baidu.com   &amp;lt;none&amp;gt;    4m53s
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这是我们再去请求baidu.default&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;nslookup baidu.default
+;; Got recursion not available from 169.254.20.10, trying next server
+;; Got recursion not available from 10.233.0.10
+;; Got recursion not available from 169.254.20.10, trying next server
+;; Got recursion not available from 10.233.0.10
+Server:         10.233.0.10
+Address:        10.233.0.10#53
+
+baidu.default.svc.cluster.local canonical name = www.baidu.com.
+;; Got SERVFAIL reply from 169.254.20.10, trying next server
+;; Got SERVFAIL reply from 10.233.0.10
+** server can&amp;#39;t find www.baidu.com: SERVFAIL
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;发现会去请求www.baidu.com。&lt;/p&gt;
+&lt;p&gt;ExternalName Service 是 Kubernetes 中一种灵活的服务类型，通过 DNS CNAME 机制将请求重定向到指定的 DNS 名称。&lt;/p&gt;
+&lt;h3 id=&#34;使用场景&#34;&gt;使用场景&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;外部资源访问： 将集群内服务请求重定向到外部资源，例如第三方 API 服务、外部数据库等。&lt;/li&gt;
+&lt;li&gt;内部资源访问： 在多集群或多命名空间环境中，将服务请求重定向到不同命名空间或不同集群内的服务。&lt;/li&gt;
+&lt;li&gt;服务迁移与重构： 在服务迁移过程中，临时将请求重定向到新的服务地址，确保服务的连续性和透明性。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;既使用普通service-也使用-headless-service&#34;&gt;既使用普通service 也使用 headless service&lt;/h2&gt;
+&lt;p&gt;当然如果在杂系统中，我们既希望有统一入口，又希望能单独访问 Pod。例如：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;# 标准 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+
+---
+
+# Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+spec:
+  clusterIP: None
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;也是可行的，标准 Service：给普通客户端统一访问入口。Headless Service：用于健康检查、分片调度、主从识别等更底层逻辑。&lt;/p&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考：&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/leojazz/p/18692708&#34;&gt;https://www.cnblogs.com/leojazz/p/18692708&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://cloud.tencent.com/developer/article/2211352&#34;&gt;https://cloud.tencent.com/developer/article/2211352&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://juejin.cn/post/7497813937670832167&#34;&gt;https://juejin.cn/post/7497813937670832167&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/zhangmingcheng/p/18224014&#34;&gt;https://www.cnblogs.com/zhangmingcheng/p/18224014&lt;/a&gt;&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/kubernetes/" term="kubernetes" label="kubernetes" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">k8s 中的 DNS</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/corndns-localdns/corndns-localdns/" />

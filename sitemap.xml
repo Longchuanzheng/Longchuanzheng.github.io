@@ -3,24 +3,27 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2025-08-08T17:20:03+08:00</lastmod>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
   </url><url>
-    <loc>http://longchuanzheng.github.io/posts/kubernetes/corndns-localdns/corndns-localdns/</loc>
-    <lastmod>2025-08-08T17:20:03+08:00</lastmod>
+    <loc>http://longchuanzheng.github.io/posts/kubernetes/headlesssvc/headlesssvc/</loc>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/knowledge/</loc>
-    <lastmod>2025-08-08T17:20:03+08:00</lastmod>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/kubernetes/</loc>
-    <lastmod>2025-08-08T17:20:03+08:00</lastmod>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2025-08-08T17:20:03+08:00</lastmod>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2025-08-08T17:20:03+08:00</lastmod>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/</loc>
+    <lastmod>2025-08-18T14:07:01+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/kubernetes/corndns-localdns/corndns-localdns/</loc>
     <lastmod>2025-08-08T17:20:03+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/linux/epoll-select/epoll-select/</loc>
