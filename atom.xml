@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-08-18T14:07:13&#43;08:00</updated>
+    <updated>2025-08-27T19:31:20&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -16,6 +16,71 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">KEK 和 DEK 的简单介绍</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/crypto/kekdek/" />
+            <id>http://longchuanzheng.github.io/posts/crypto/kekdek/</id>
+            <updated>2025-08-27T19:31:02&#43;08:00</updated>
+            <published>2025-08-27T19:29:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">kms（Key Management Service），在需要加解密的应用中必不可少，实现上利用了密码学相……</summary>
+            
+                <content type="html">&lt;p&gt;kms（Key Management Service），在需要加解密的应用中必不可少，实现上利用了密码学相关对称，非对称算法，密钥交换协议等。这些算计算机基础知识，有两个名词KEK和DEK 需要额外解释。&lt;/p&gt;
+&lt;h2 id=&#34;概念解释&#34;&gt;概念解释&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;DEK&lt;/strong&gt;:（Data Encryption Key，数据加密密钥），即对数据进行加密的密钥。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;每条记录均使用不同的DEK（随机生成）。&lt;/li&gt;
+&lt;li&gt;DEK不能明文存储，需要使用KEK再次加密。&lt;/li&gt;
+&lt;li&gt;DEK在加密后建议随密文数据一起存储，可用于大数据场景。当只有少量的DEK且预期不会增长时，才会考虑存储在KMS（不推荐）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;KEK&lt;/strong&gt;:（Key Encryption Key，密钥加密密钥），即对DEK进行加密的密钥。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;每个应用或每个用户在每个应用中应该使用不同的KEK。&lt;/li&gt;
+&lt;li&gt;KEK加密存储在KMS系统中，不随密文数据一起存储，通常也不应存储在应用自身。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&#34;1.awebp&#34; alt=&#34;image.png&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;加解密流程&#34;&gt;加解密流程&lt;/h2&gt;
+&lt;p&gt;加密时，使用随机生成的DEK对明文数据进行加密，使用KEK对随机DEK加密，最后加密后的数据和加密后的DEK一并写入数据库（或其他存储系统)&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;2.awebp&#34; alt=&#34;image.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;解密时，从数据库或存储系统提取密文数据和密文DEK，先使用KEK对密文DEK进行解密，得到明文的DEK，再使用明文的DEK对密文数据进行解密，得到明文数据。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;3.awebp&#34; alt=&#34;image.png&#34;&gt;&lt;/p&gt;
+&lt;p&gt;因此加解密时都需要KMS 系统和业务本身参与，黑客即使获取了某一个密钥也无法获得明文数据。&lt;/p&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考：&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://juejin.cn/post/7241004522566205498&#34;&gt;https://juejin.cn/post/7241004522566205498&lt;/a&gt;&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/crypto/" term="crypto" label="crypto" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">Headless SVC 使用</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/headlesssvc/headlesssvc/" />
