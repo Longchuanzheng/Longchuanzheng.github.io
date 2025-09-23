@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-08-29T14:43:04&#43;08:00</updated>
+    <updated>2025-09-23T17:13:03&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -16,6 +16,166 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">使用LUKS加密磁盘</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/virt/encrypt-with-luks/" />
+            <id>http://longchuanzheng.github.io/posts/virt/encrypt-with-luks/</id>
+            <updated>2025-09-23T17:12:44&#43;08:00</updated>
+            <published>2025-09-23T17:12:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">cryptsetup LUKS dm-crypt 是linux 上常见的磁盘加密方法。其中cryptsetup 是一个用户态工具，L……</summary>
+            
+                <content type="html">&lt;p&gt;cryptsetup LUKS dm-crypt 是linux 上常见的磁盘加密方法。其中cryptsetup  是一个用户态工具，LUKS 是一种用于为块设备加密提供统一格式的&lt;strong&gt;加密元数据规范&lt;/strong&gt;。dm-crypt 是进行块设备加解密读写的模块，dm-crypt 对于读写本身是透明的。&lt;/p&gt;
+&lt;h2 id=&#34;示例步骤ai&#34;&gt;示例步骤（AI）&lt;/h2&gt;
+&lt;p&gt;只要 LUKS 设备处于解锁状态，宿主机可以直接访问 &lt;code&gt;/dev/mapper/my_encrypted_disk&lt;/code&gt;，操作方式与普通分区基本一致。加密/解密过程对使用设备的进程来说是“透明的”。&lt;/p&gt;
+&lt;h3 id=&#34;用-luks-格式化磁盘&#34;&gt;用 LUKS 格式化磁盘&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;sudo cryptsetup luksFormat /dev/sda
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;系统会提示你输入一个密码，这个密码用于解锁磁盘。&lt;/p&gt;
+&lt;h3 id=&#34;打开加密分区&#34;&gt;打开加密分区&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;sudo cryptsetup luksOpen /dev/sda my_encrypted_disk
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这将会在 &lt;code&gt;/dev/mapper/&lt;/code&gt; 下创建一个名为 &lt;code&gt;my_encrypted_disk&lt;/code&gt; 的解密设备节点。&lt;/p&gt;
+&lt;h3 id=&#34;对解密后的设备进行分区与格式化例如格式化为-ext4&#34;&gt;对解密后的设备进行分区与格式化（例如格式化为 ext4）&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;sudo mkfs.ext4 /dev/mapper/my_encrypted_disk
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;挂载加密磁盘&#34;&gt;挂载加密磁盘&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;sudo mkdir /mnt/secure
+sudo mount /dev/mapper/my_encrypted_disk /mnt/secure
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;卸载与关闭加密分区&#34;&gt;卸载与关闭加密分区&lt;/h3&gt;
+&lt;p&gt;卸载：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;sudo umount /mnt/secure
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;关闭 LUKS 设备：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;sudo cryptsetup luksClose my_encrypted_disk
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;技术流程&#34;&gt;技术流程&lt;/h2&gt;
+&lt;h3 id=&#34;luks-是规范标准&#34;&gt;LUKS 是规范（标准）&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;LUKS（Linux Unified Key Setup）&lt;/strong&gt; 是设计用于为块设备加密提供统一格式的&lt;strong&gt;加密元数据规范&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;LUKS 规定了设备头部（header）的结构：包括版本、加密算法、加盐、多个密钥槽、主密钥的加密副本等。&lt;/li&gt;
+&lt;li&gt;这保证了不同工具/发行版之间的兼容性。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;cryptsetup-是工具&#34;&gt;cryptsetup 是工具&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;cryptsetup&lt;/strong&gt; 是用户空间的命令行工具，负责
+&lt;ul&gt;
+&lt;li&gt;初始化加密设备（生成 LUKS 头部，随机主密钥，设置密码等）&lt;/li&gt;
+&lt;li&gt;解锁加密设备（输入密码，解密主密钥）&lt;/li&gt;
+&lt;li&gt;管理密钥槽（添加、删除、更新密码）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;cryptsetup 主要完成：
+&lt;ul&gt;
+&lt;li&gt;把你的分区/块设备&amp;quot;加工&amp;quot;成一个带 LUKS 头部的加密卷&lt;/li&gt;
+&lt;li&gt;负责用密码解密出主密钥，并临时传递给内核的 dm-crypt&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;dm-crypt-是内核模块核心加解密引擎&#34;&gt;dm-crypt 是内核模块（核心加解密引擎）&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;dm-crypt 是 Linux 内核中的块设备加密模块。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;dm-crypt 不关心 LUKS 格式&lt;/strong&gt;，它只负责用你给它的密钥对块设备的数据块进行加解密。&lt;/li&gt;
+&lt;li&gt;cryptsetup 将从 LUKS 头部解密出来的主密钥，传递给 dm-crypt，后者负责实际的加解密操作。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;工作流程梳理&#34;&gt;工作流程梳理&lt;/h3&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;初始化&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;使用&lt;code&gt;cryptsetup luksFormat /dev/sdaX&lt;/code&gt;，工具会：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;写入 LUKS 头部，保存密钥相关元数据&lt;/li&gt;
+&lt;li&gt;随机生成主密钥，使用密码加密主密钥，填入密钥槽&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;解锁流程&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;使用&lt;code&gt;cryptsetup luksOpen /dev/sdaX myvolume&lt;/code&gt;，输入密码：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;cryptsetup 读取头部，用密码解密出主密钥&lt;/li&gt;
+&lt;li&gt;将主密钥传递给 dm-crypt，并创建 &lt;code&gt;/dev/mapper/myvolume&lt;/code&gt; 设备&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;数据读写&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;对 &lt;code&gt;/dev/mapper/myvolume&lt;/code&gt; 的读写请求，dm-crypt 用主密钥实时加解密，实际存储在物理设备的数据都是密文&lt;/li&gt;
+&lt;li&gt;LUKS 头部只在解锁时用，平时不参与数据流&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;技术优势&#34;&gt;技术优势&lt;/h2&gt;
+&lt;h3 id=&#34;数据安全防止物理窃取丢失泄露&#34;&gt;数据安全（防止物理窃取/丢失泄露）&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;核心意义&lt;/strong&gt;：&lt;strong&gt;保护数据隐私和机密性&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;即使整块硬盘/SSD/移动硬盘被偷走、丢失或拆下来，&lt;strong&gt;没有正确的解密密码，别人无法读取盘里的数据&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;适用于笔记本、服务器、存储介质等任何有被物理获取风险的场景。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;防止非法访问&#34;&gt;防止非法访问&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;即便有人获得了超级用户（root）权限，只要系统未解锁加密盘，&lt;strong&gt;无法直接读取加密数据&lt;/strong&gt;。&lt;/li&gt;
+&lt;li&gt;适合服务器托管、云主机等场景，能限制管理员、外部人员等越权访问敏感数据。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;保护数据下线报废转让销毁&#34;&gt;保护数据下线（报废/转让/销毁）&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;硬盘报废、转让、返修时，&lt;strong&gt;只需销毁加密密钥或LUKS头部，数据就不可恢复&lt;/strong&gt;，而无需将整个盘物理粉碎。&lt;/li&gt;
+&lt;li&gt;这在企业、政府等对数据销毁有合规要求的环境非常重要。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;透明性和易用性&#34;&gt;透明性和易用性&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;对用户和应用来说，加密/解密是“透明”的，不影响日常操作。&lt;/li&gt;
+&lt;li&gt;不需要逐文件/逐目录加密，&lt;strong&gt;全盘/分区加密一次到位&lt;/strong&gt;。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;支持多用户和密钥管理&#34;&gt;支持多用户和密钥管理&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;LUKS 支持多个密钥槽，便于权限移交、多人共享安全访问、密码更换等实际需求。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;luks-如何实现多访问密码&#34;&gt;LUKS 如何实现多访问密码&lt;/h2&gt;
+&lt;p&gt;LUKS 中规定主密钥（Master Key）主密钥永远不会以明文形式暴露给用户或保存在磁盘上，只在解锁卷时，短暂地以明文形式存在于内存（RAM）中，由内核的 dm-crypt 模块使用。而在加密卷的起始部分得LUKS 头部 存储了多个密钥槽，每个槽对应一个访问密码。&lt;/p&gt;
+&lt;p&gt;密钥槽中得密钥是用户密钥 通过KDF 生成得强密钥。KDF（密钥派生函数）是一种加密学算法，它的主要作用是将一个用户输入的弱秘密（比如密码、PIN码）转换为一个强密钥，用于加密、签名等场景。KDF 能抵抗暴力破解和字典攻击。&lt;/p&gt;
+&lt;h3 id=&#34;生成密码&#34;&gt;生成密码&lt;/h3&gt;
+&lt;p&gt;生成密码时，可使用&lt;code&gt;sudo cryptsetup luksAddKey /dev/sda1&lt;/code&gt;命令，这个命令会：&lt;/p&gt;
+&lt;p&gt;通过KDF 生成一个高强度密钥密钥，&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;DerivedKey = KDF(password=&amp;#34;XXX&amp;#34;, salt=SaltX, iterations=XXX)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;然后用它加密主密钥，写入密钥槽。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;MasterKey = Decrypt(Encrypted_MasterKey, DerivedKey)
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;输入密码&#34;&gt;输入密码&lt;/h3&gt;
+&lt;p&gt;输入密码后，对每个启用的密钥槽，cryptsetup 会做如下操作：&lt;/p&gt;
+&lt;p&gt;根据该槽的salt 和其他参数，根据KDF 算法生成DerivedKey，然后通过DerivedKey 解密密钥槽中存放的Encrypted_MasterKey。解密后会有一个校验，如果主密钥解密出来校验成功，说明密码正确。解密成功后，主密钥（Master Key）被加载到内存。这个主密钥就是后续 dm-crypt 用来实时加解密整个数据区的真正密钥。&lt;/p&gt;
+&lt;p&gt;如果解密失败（校验失败），cryptsetup 会用同样的流程尝试下一个密钥槽（即用不同的 salt/KDF 参数再来一次）。直到某一槽校验通过或所有槽都失败。&lt;/p&gt;
+&lt;p&gt;因此这里的加解密均为对称加密算法。&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/virt/" term="virt" label="virt" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">KEK 和 DEK 的简单介绍</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/crypto/kekdek/" />
