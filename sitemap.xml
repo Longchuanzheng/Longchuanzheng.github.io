@@ -3,19 +3,31 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://longchuanzheng.github.io/categories/</loc>
-    <lastmod>2025-09-23T17:12:44+08:00</lastmod>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/categories/golang/</loc>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/go/mutex/semaacquireandrelease/</loc>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/knowledge/</loc>
-    <lastmod>2025-09-23T17:12:44+08:00</lastmod>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/go/mutex/mutex/</loc>
+    <lastmod>2025-10-17T11:12:09+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/</loc>
-    <lastmod>2025-09-23T17:12:44+08:00</lastmod>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/</loc>
-    <lastmod>2025-09-23T17:12:44+08:00</lastmod>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
+  </url><url>
+    <loc>http://longchuanzheng.github.io/posts/go/mutex/rwmutex/</loc>
+    <lastmod>2025-10-17T11:12:24+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/tags/</loc>
-    <lastmod>2025-09-23T17:12:44+08:00</lastmod>
+    <lastmod>2025-10-17T11:13:19+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/virt/</loc>
     <lastmod>2025-09-23T17:12:44+08:00</lastmod>
@@ -64,9 +76,6 @@
   </url><url>
     <loc>http://longchuanzheng.github.io/categories/sql/</loc>
     <lastmod>2024-12-10T18:58:44+08:00</lastmod>
-  </url><url>
-    <loc>http://longchuanzheng.github.io/categories/golang/</loc>
-    <lastmod>2024-11-01T17:30:23+08:00</lastmod>
   </url><url>
     <loc>http://longchuanzheng.github.io/posts/go/wait/until/</loc>
     <lastmod>2024-11-01T17:30:23+08:00</lastmod>

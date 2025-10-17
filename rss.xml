@@ -23,10 +23,1068 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Tue, 23 Sep 2025 17:13:03 &#43;0800</lastBuildDate>
+        <lastBuildDate>Fri, 17 Oct 2025 11:14:07 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
+        
+            <item>
+                <title>goroutine 阻塞和唤醒</title>
+                <link>http://longchuanzheng.github.io/posts/go/mutex/semaacquireandrelease/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/go/mutex/semaacquireandrelease/</guid>
+                <pubDate>Fri, 17 Oct 2025 11:12:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;Go 运行时通过 Semacquire（goroutine 尝试获取信号量，失败则用 sudog 记录状态并挂起）和 Semrelease（释放信号量后唤醒等待的 goroutine，改状态为可运行并加入调度）实现资源同步，过程中依赖 g0 栈切换工具（mcall/systemstack）保障安全操作，最终支撑 goroutine 轻量级并发的高效调度。&lt;/p&gt;
+&lt;h2 id=&#34;semacquire&#34;&gt;Semacquire&lt;/h2&gt;
+&lt;p&gt;runtime_SemacquireRWMutex位于runtime/sema.go，&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func sync_runtime_SemacquireRWMutexR(addr *uint32, lifo bool, skipframes int) {
+    semacquire1(addr, lifo, semaBlockProfile|semaMutexProfile, skipframes, waitReasonSyncRWMutexRLock)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;semacquire1 大致流程如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;获取当前goroutin&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果信号量的值是1 则说明没有其他goroutin 占用，将值-1 并返回&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;从 P 中获取一个sudog 对象&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;执行for 循环：1）将当前sudog  加入信号量的等待队列，该m 会尝试调度其他g 执行，这个g会等待信号量被唤醒，若此时信号量的值是1 则说明没有其他goroutin 占用，将值-1 并继续执行后续逻辑&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;释放sudog&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;sudog&lt;/code&gt; 是用于管理 goroutine 等待状态的关键结构体（例如在信号量、锁、channel 等同步操作中），其生命周期通常是：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;当 goroutine 需要等待资源时，通过 &lt;code&gt;acquireSudog()&lt;/code&gt; 从缓存池获取一个 &lt;code&gt;sudog&lt;/code&gt;；&lt;/li&gt;
+&lt;li&gt;使用 &lt;code&gt;sudog&lt;/code&gt; 记录等待信息（如关联的 goroutine、等待的资源地址、在等待队列中的位置等）；&lt;/li&gt;
+&lt;li&gt;当 goroutine 被唤醒（获取到资源）后，&lt;code&gt;sudog&lt;/code&gt; 不再需要，通过 &lt;code&gt;releaseSudog(s)&lt;/code&gt; 将其归还到缓存池。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/blockquote&gt;
+&lt;blockquote&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;for {
+    lockWithRank(&amp;amp;root.lock, lockRankRoot)
+    // Add ourselves to nwait to disable &amp;#34;easy case&amp;#34; in semrelease.
+    root.nwait.Add(1)
+    // Check cansemacquire to avoid missed wakeup.
+    if cansemacquire(addr) {
+       root.nwait.Add(-1)
+       unlock(&amp;amp;root.lock)
+       break
+    }
+    // Any semrelease after the cansemacquire knows we&amp;#39;re waiting
+    // (we set nwait above), so go to sleep.
+    root.queue(addr, s, lifo)
+    goparkunlock(&amp;amp;root.lock, reason, traceBlockSync, 4+skipframes)
+    if s.ticket != 0 || cansemacquire(addr) {
+       break
+    }
+ }
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这段循环中会root.nwait.Add(1)， 这是与&lt;code&gt;semrelease&lt;/code&gt;逻辑配合使用的， &lt;code&gt;semrelease&lt;/code&gt;依据 &lt;code&gt;root.nwait&lt;/code&gt; 决定是否唤醒等待者&lt;/p&gt;
+&lt;p&gt;当其他 goroutine 释放信号量（&lt;code&gt;semrelease&lt;/code&gt;）时，会检查 &lt;code&gt;root.nwait&lt;/code&gt; 的值：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;若 &lt;code&gt;root.nwait == 0&lt;/code&gt;（无等待者），&lt;code&gt;semrelease&lt;/code&gt; 只需简单增加信号量计数（快速释放）；&lt;/li&gt;
+&lt;li&gt;若 &lt;code&gt;root.nwait &amp;gt; 0&lt;/code&gt;（有等待者），&lt;code&gt;semrelease&lt;/code&gt; 必须从等待队列中唤醒一个等待者（慢速释放），并减少 &lt;code&gt;root.nwait&lt;/code&gt; 计数。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func semacquire1(addr *uint32, lifo bool, profile semaProfileFlags, skipframes int, reason waitReason) {
+    gp := getg()
+    if gp != gp.m.curg {
+       throw(&amp;#34;semacquire not on the G stack&amp;#34;)
+    }
+
+    // Easy case.
+    if cansemacquire(addr) {
+       return
+    }
+
+    // Harder case:
+    // increment waiter count
+    // try cansemacquire one more time, return if succeeded
+    // enqueue itself as a waiter
+    // sleep
+    // (waiter descriptor is dequeued by signaler)
+    s := acquireSudog()
+    root := semtable.rootFor(addr)
+    t0 := int64(0)
+    s.releasetime = 0
+    s.acquiretime = 0
+    s.ticket = 0
+    if profile&amp;amp;semaBlockProfile != 0 &amp;amp;&amp;amp; blockprofilerate &amp;gt; 0 {
+       t0 = cputicks()
+       s.releasetime = -1
+    }
+    if profile&amp;amp;semaMutexProfile != 0 &amp;amp;&amp;amp; mutexprofilerate &amp;gt; 0 {
+       if t0 == 0 {
+          t0 = cputicks()
+       }
+       s.acquiretime = t0
+    }
+    for {
+       lockWithRank(&amp;amp;root.lock, lockRankRoot)
+       // Add ourselves to nwait to disable &amp;#34;easy case&amp;#34; in semrelease.
+       root.nwait.Add(1)
+       // Check cansemacquire to avoid missed wakeup.
+       if cansemacquire(addr) {
+          root.nwait.Add(-1)
+          unlock(&amp;amp;root.lock)
+          break
+       }
+       // Any semrelease after the cansemacquire knows we&amp;#39;re waiting
+       // (we set nwait above), so go to sleep.
+       root.queue(addr, s, lifo)
+       goparkunlock(&amp;amp;root.lock, reason, traceBlockSync, 4+skipframes)
+       if s.ticket != 0 || cansemacquire(addr) {
+          break
+       }
+    }
+    if s.releasetime &amp;gt; 0 {
+       blockevent(s.releasetime-t0, 3+skipframes)
+    }
+    releaseSudog(s)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;goparkunlock会将当前 goroutine 切换到 &amp;quot;等待状态&amp;quot;，同时会释放（解锁）之前持有的锁（对应信号量等待队列的锁）&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Puts the current goroutine into a waiting state and unlocks the lock.
+// The goroutine can be made runnable again by calling goready(gp).
+func goparkunlock(lock *mutex, reason waitReason, traceReason traceBlockReason, traceskip int) {
+    gopark(parkunlock_c, unsafe.Pointer(lock), reason, traceReason, traceskip)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;reason 为 &lt;code&gt;waitReasonSemacquire&lt;/code&gt;。 gopark会将该g 对应的m 加锁，并且保存需要解锁的资源（对应信号量等待队列的锁），以及解锁的回调函数。然后释放m。最后执行macll 函数，&lt;code&gt;mcall&lt;/code&gt; 是一个特殊函数，用于从 &lt;code&gt;G&lt;/code&gt; 的用户栈切换到 &lt;code&gt;M&lt;/code&gt; 的g0执行指定函数（&lt;code&gt;park_m&lt;/code&gt;）。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func gopark(unlockf func(*g, unsafe.Pointer) bool, lock unsafe.Pointer, reason waitReason, traceReason traceBlockReason, traceskip int) {
+    if reason != waitReasonSleep {
+       checkTimeouts() // timeouts may expire while two goroutines keep the scheduler busy
+    }
+    mp := acquirem()
+    gp := mp.curg
+    status := readgstatus(gp)
+    if status != _Grunning &amp;amp;&amp;amp; status != _Gscanrunning {
+       throw(&amp;#34;gopark: bad g status&amp;#34;)
+    }
+    mp.waitlock = lock
+    mp.waitunlockf = unlockf
+    gp.waitreason = reason
+    mp.waitTraceBlockReason = traceReason
+    mp.waitTraceSkip = traceskip
+    releasem(mp)
+    // can&amp;#39;t do anything that might move the G between Ms here.
+    mcall(park_m)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;mcall&lt;/code&gt;是通过汇编代码实现，具体位置可参考 src/runtime/asm_amd64.s，用处是将执行栈从当前 goroutine（G）的用户栈切换到系统线程（M）的g0 栈，并在 kernel 栈上执行指定函数 &lt;code&gt;fn&lt;/code&gt;，&lt;code&gt;fn&lt;/code&gt;此处为park_m，参数为当前goroutine（G）。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// func mcall(fn func(*g))
+// Switch to m-&amp;gt;g0&amp;#39;s stack, call fn(g).
+// Fn must never return. It should gogo(&amp;amp;g-&amp;gt;sched)
+// to keep running g.
+TEXT runtime·mcall&amp;lt;ABIInternal&amp;gt;(SB), NOSPLIT, $0-8
+    MOVQ   AX, DX // DX = fn
+
+    // Save state in g-&amp;gt;sched. The caller&amp;#39;s SP and PC are restored by gogo to
+    // resume execution in the caller&amp;#39;s frame (implicit return). The caller&amp;#39;s BP
+    // is also restored to support frame pointer unwinding.
+    MOVQ   SP, BX // hide (SP) reads from vet
+    MOVQ   8(BX), BX  // caller&amp;#39;s PC
+    MOVQ   BX, (g_sched+gobuf_pc)(R14)
+    LEAQ   fn+0(FP), BX   // caller&amp;#39;s SP
+    MOVQ   BX, (g_sched+gobuf_sp)(R14)
+    // Get the caller&amp;#39;s frame pointer by dereferencing BP. Storing BP as it is
+    // can cause a frame pointer cycle, see CL 476235.
+    MOVQ   (BP), BX // caller&amp;#39;s BP
+    MOVQ   BX, (g_sched+gobuf_bp)(R14)
+
+    // switch to m-&amp;gt;g0 &amp;amp; its stack, call fn
+    MOVQ   g_m(R14), BX
+    MOVQ   m_g0(BX), SI   // SI = g.m.g0
+    CMPQ   SI, R14    // if g == m-&amp;gt;g0 call badmcall
+    JNE    goodm
+    JMP    runtime·badmcall(SB)
+goodm:
+    MOVQ   R14, AX       // AX (and arg 0) = g
+    MOVQ   SI, R14       // g = g.m.g0
+    get_tls(CX)       // Set G in TLS
+    MOVQ   R14, g(CX)
+    MOVQ   (g_sched+gobuf_sp)(R14), SP    // sp = g0.sched.sp
+    MOVQ   $0, BP // clear frame pointer, as caller may execute on another M
+    PUSHQ  AX // open up space for fn&amp;#39;s arg spill slot
+    MOVQ   0(DX), R12
+    CALL   R12       // fn(g)
+    // The Windows native stack unwinder incorrectly classifies the next instruction
+    // as part of the function epilogue, producing a wrong call stack.
+    // Add a NOP to work around this issue. See go.dev/issue/67007.
+    BYTE   $0x90
+    POPQ   AX
+    JMP    runtime·badmcall2(SB)
+    RET
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;park_m 中：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;首先将g 的状态转换为&lt;code&gt;_Gwaiting&lt;/code&gt;，&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dropg()&lt;/code&gt; 将m与当前 g解绑&lt;/li&gt;
+&lt;li&gt;然后会查看&lt;code&gt;waitunlockf&lt;/code&gt;(信号量等待队列的锁解锁的回调函数)，如果回调函数失败则&lt;code&gt;execute(gp, true)&lt;/code&gt;继续执行 g，&lt;/li&gt;
+&lt;li&gt;否则通过&lt;code&gt;schedule()&lt;/code&gt; 去调度新的g 执行。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// park continuation on g0.
+func park_m(gp *g) {
+    mp := getg().m
+
+    trace := traceAcquire()
+
+    // If g is in a synctest group, we don&amp;#39;t want to let the group
+    // become idle until after the waitunlockf (if any) has confirmed
+    // that the park is happening.
+    // We need to record gp.bubble here, since waitunlockf can change it.
+    bubble := gp.bubble
+    if bubble != nil {
+       bubble.incActive()
+    }
+
+    if trace.ok() {
+       // Trace the event before the transition. It may take a
+       // stack trace, but we won&amp;#39;t own the stack after the
+       // transition anymore.
+       trace.GoPark(mp.waitTraceBlockReason, mp.waitTraceSkip)
+    }
+    // N.B. Not using casGToWaiting here because the waitreason is
+    // set by park_m&amp;#39;s caller.
+    casgstatus(gp, _Grunning, _Gwaiting)
+    if trace.ok() {
+       traceRelease(trace)
+    }
+
+    dropg()
+
+    if fn := mp.waitunlockf; fn != nil {
+       ok := fn(gp, mp.waitlock)
+       mp.waitunlockf = nil
+       mp.waitlock = nil
+       if !ok {
+          trace := traceAcquire()
+          casgstatus(gp, _Gwaiting, _Grunnable)
+          if bubble != nil {
+             bubble.decActive()
+          }
+          if trace.ok() {
+             trace.GoUnpark(gp, 2)
+             traceRelease(trace)
+          }
+          execute(gp, true) // Schedule it back, never returns.
+       }
+    }
+
+    if bubble != nil {
+       bubble.decActive()
+    }
+
+    schedule()
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在此我们先介绍一下execute 方法：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;绑定 &lt;code&gt;M&lt;/code&gt; 与 &lt;code&gt;G&lt;/code&gt; 的关联关系；&lt;/li&gt;
+&lt;li&gt;将 &lt;code&gt;G&lt;/code&gt; 的状态从 “就绪” 改为 “运行”；&lt;/li&gt;
+&lt;li&gt;初始化运行所需的状态（栈检查阈值、时间片等）；&lt;/li&gt;
+&lt;li&gt;通过 &lt;code&gt;gogo&lt;/code&gt; 切换到 &lt;code&gt;G&lt;/code&gt; 的执行上下文，正式开始执行。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func execute(gp *g, inheritTime bool) {
+    //代码运行在 M 的 g0 栈 上，而非被调度的 gp 栈上，所以可以获得m
+    mp := getg().m
+
+    if goroutineProfile.active {
+       // Make sure that gp has had its stack written out to the goroutine
+       // profile, exactly as it was when the goroutine profiler first stopped
+       // the world.
+       tryRecordGoroutineProfile(gp, nil, osyield)
+    }
+
+    // Assign gp.m before entering _Grunning so running Gs have an M.
+    mp.curg = gp
+    gp.m = mp
+    gp.syncSafePoint = false // Clear the flag, which may have been set by morestack.
+    casgstatus(gp, _Grunnable, _Grunning)
+    gp.waitsince = 0
+    gp.preempt = false
+    gp.stackguard0 = gp.stack.lo + stackGuard
+    if !inheritTime {
+       mp.p.ptr().schedtick++
+    }
+
+    // Check whether the profiler needs to be turned on or off.
+    hz := sched.profilehz
+    if mp.profilehz != hz {
+       setThreadCPUProfiler(hz)
+    }
+
+    trace := traceAcquire()
+    if trace.ok() {
+       trace.GoStart()
+       traceRelease(trace)
+    }
+
+    gogo(&amp;amp;gp.sched)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;gogo&lt;/code&gt; 是Go 运行时实现 “goroutine 状态恢复” 的核心函数，它通过从 &lt;code&gt;gobuf&lt;/code&gt; 结构中读取保存的上下文（PC、SP、BP 等），将 G 的执行状态无缝恢复到被挂起前的状态，是实现 goroutine 阻塞与唤醒、调度切换的底层关键机制。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// func gogo(buf *gobuf)
+// restore state from Gobuf; longjmp
+TEXT runtime·gogo(SB), NOSPLIT, $0-8
+    MOVQ   buf+0(FP), BX     // gobuf
+    MOVQ   gobuf_g(BX), DX
+    MOVQ   0(DX), CX     // make sure g != nil
+    JMP    gogo&amp;lt;&amp;gt;(SB)
+
+TEXT gogo&amp;lt;&amp;gt;(SB), NOSPLIT, $0
+    get_tls(CX)
+    MOVQ   DX, g(CX)
+    MOVQ   DX, R14       // set the g register
+    MOVQ   gobuf_sp(BX), SP   // restore SP
+    MOVQ   gobuf_ctxt(BX), DX
+    MOVQ   gobuf_bp(BX), BP
+    MOVQ   $0, gobuf_sp(BX)   // clear to help garbage collector
+    MOVQ   $0, gobuf_ctxt(BX)
+    MOVQ   $0, gobuf_bp(BX)
+    MOVQ   gobuf_pc(BX), BX
+    JMP    BX
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;最后我们再来看一下&lt;code&gt;schedule()&lt;/code&gt;方法，总的来说在最终会找到一个待执行的g，并执行&lt;code&gt;execute()&lt;/code&gt;。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// One round of scheduler: find a runnable goroutine and execute it.
+// Never returns.
+func schedule() {
+    mp := getg().m
+
+    if mp.locks != 0 {
+       throw(&amp;#34;schedule: holding locks&amp;#34;)
+    }
+
+    if mp.lockedg != 0 {
+       stoplockedm()
+       execute(mp.lockedg.ptr(), false) // Never returns.
+    }
+
+    // We should not schedule away from a g that is executing a cgo call,
+    // since the cgo call is using the m&amp;#39;s g0 stack.
+    if mp.incgo {
+       throw(&amp;#34;schedule: in cgo&amp;#34;)
+    }
+
+top:
+    pp := mp.p.ptr()
+    pp.preempt = false
+
+    // Safety check: if we are spinning, the run queue should be empty.
+    // Check this before calling checkTimers, as that might call
+    // goready to put a ready goroutine on the local run queue.
+    if mp.spinning &amp;amp;&amp;amp; (pp.runnext != 0 || pp.runqhead != pp.runqtail) {
+       throw(&amp;#34;schedule: spinning with local work&amp;#34;)
+    }
+
+    gp, inheritTime, tryWakeP := findRunnable() // blocks until work is available
+
+    // findRunnable may have collected an allp snapshot. The snapshot is
+    // only required within findRunnable. Clear it to all GC to collect the
+    // slice.
+    mp.clearAllpSnapshot()
+
+    if debug.dontfreezetheworld &amp;gt; 0 &amp;amp;&amp;amp; freezing.Load() {
+       // See comment in freezetheworld. We don&amp;#39;t want to perturb
+       // scheduler state, so we didn&amp;#39;t gcstopm in findRunnable, but
+       // also don&amp;#39;t want to allow new goroutines to run.
+       //
+       // Deadlock here rather than in the findRunnable loop so if
+       // findRunnable is stuck in a loop we don&amp;#39;t perturb that
+       // either.
+       lock(&amp;amp;deadlock)
+       lock(&amp;amp;deadlock)
+    }
+
+    // This thread is going to run a goroutine and is not spinning anymore,
+    // so if it was marked as spinning we need to reset it now and potentially
+    // start a new spinning M.
+    if mp.spinning {
+       resetspinning()
+    }
+
+    if sched.disable.user &amp;amp;&amp;amp; !schedEnabled(gp) {
+       // Scheduling of this goroutine is disabled. Put it on
+       // the list of pending runnable goroutines for when we
+       // re-enable user scheduling and look again.
+       lock(&amp;amp;sched.lock)
+       if schedEnabled(gp) {
+          // Something re-enabled scheduling while we
+          // were acquiring the lock.
+          unlock(&amp;amp;sched.lock)
+       } else {
+          sched.disable.runnable.pushBack(gp)
+          unlock(&amp;amp;sched.lock)
+          goto top
+       }
+    }
+
+    // If about to schedule a not-normal goroutine (a GCworker or tracereader),
+    // wake a P if there is one.
+    if tryWakeP {
+       wakep()
+    }
+    if gp.lockedm != 0 {
+       // Hands off own p to the locked m,
+       // then blocks waiting for a new p.
+       startlockedm(gp)
+       goto top
+    }
+
+    execute(gp, inheritTime)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;semrelease&#34;&gt;Semrelease&lt;/h2&gt;
+&lt;p&gt;runtime_Semrelease 底层调用semrelease1&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//go:linkname sync_runtime_Semrelease sync.runtime_Semrelease
+func sync_runtime_Semrelease(addr *uint32, handoff bool, skipframes int) {
+    semrelease1(addr, handoff, skipframes)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在semrelease1 中，类似semacquire1：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;获取信号量的等待队列&lt;/li&gt;
+&lt;li&gt;标记信号量加锁&lt;/li&gt;
+&lt;li&gt;如果等待队列中没有元素则直接返回&lt;/li&gt;
+&lt;li&gt;获取队首元素并解锁&lt;/li&gt;
+&lt;li&gt;handoff 为false 不考虑&amp;quot;直接交接&amp;quot;模式&lt;/li&gt;
+&lt;li&gt;readyWithTime(s, 5+skipframes)将元素sudog中的g 状态修改为可运行&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func semrelease1(addr *uint32, handoff bool, skipframes int) {
+    root := semtable.rootFor(addr)
+    atomic.Xadd(addr, 1)
+
+    // Easy case: no waiters?
+    // This check must happen after the xadd, to avoid a missed wakeup
+    // (see loop in semacquire).
+    if root.nwait.Load() == 0 {
+       return
+    }
+
+    // Harder case: search for a waiter and wake it.
+    lockWithRank(&amp;amp;root.lock, lockRankRoot)
+    if root.nwait.Load() == 0 {
+       // The count is already consumed by another goroutine,
+       // so no need to wake up another goroutine.
+       unlock(&amp;amp;root.lock)
+       return
+    }
+    s, t0, tailtime := root.dequeue(addr)
+    if s != nil {
+       root.nwait.Add(-1)
+    }
+    unlock(&amp;amp;root.lock)
+    if s != nil { // May be slow or even yield, so unlock first
+       acquiretime := s.acquiretime
+       if acquiretime != 0 {
+          // Charge contention that this (delayed) unlock caused.
+          // If there are N more goroutines waiting beyond the
+          // one that&amp;#39;s waking up, charge their delay as well, so that
+          // contention holding up many goroutines shows up as
+          // more costly than contention holding up a single goroutine.
+          // It would take O(N) time to calculate how long each goroutine
+          // has been waiting, so instead we charge avg(head-wait, tail-wait)*N.
+          // head-wait is the longest wait and tail-wait is the shortest.
+          // (When we do a lifo insertion, we preserve this property by
+          // copying the old head&amp;#39;s acquiretime into the inserted new head.
+          // In that case the overall average may be slightly high, but that&amp;#39;s fine:
+          // the average of the ends is only an approximation to the actual
+          // average anyway.)
+          // The root.dequeue above changed the head and tail acquiretime
+          // to the current time, so the next unlock will not re-count this contention.
+          dt0 := t0 - acquiretime
+          dt := dt0
+          if s.waiters != 0 {
+             dtail := t0 - tailtime
+             dt += (dtail + dt0) / 2 * int64(s.waiters)
+          }
+          mutexevent(dt, 3+skipframes)
+       }
+       if s.ticket != 0 {
+          throw(&amp;#34;corrupted semaphore ticket&amp;#34;)
+       }
+       if handoff &amp;amp;&amp;amp; cansemacquire(addr) {
+          s.ticket = 1
+       }
+       readyWithTime(s, 5+skipframes)
+       if s.ticket == 1 &amp;amp;&amp;amp; getg().m.locks == 0 &amp;amp;&amp;amp; getg() != getg().m.g0 {
+          // Direct G handoff
+          //
+          // readyWithTime has added the waiter G as runnext in the
+          // current P; we now call the scheduler so that we start running
+          // the waiter G immediately.
+          //
+          // Note that waiter inherits our time slice: this is desirable
+          // to avoid having a highly contended semaphore hog the P
+          // indefinitely. goyield is like Gosched, but it emits a
+          // &amp;#34;preempted&amp;#34; trace event instead and, more importantly, puts
+          // the current G on the local runq instead of the global one.
+          // We only do this in the starving regime (handoff=true), as in
+          // the non-starving case it is possible for a different waiter
+          // to acquire the semaphore while we are yielding/scheduling,
+          // and this would be wasteful. We wait instead to enter starving
+          // regime, and then we start to do direct handoffs of ticket and P.
+          //
+          // See issue 33747 for discussion.
+          //
+          // We don&amp;#39;t handoff directly if we&amp;#39;re holding locks or on the
+          // system stack, since it&amp;#39;s not safe to enter the scheduler.
+          goyield()
+       }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;最终调用goready 方法&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func readyWithTime(s *sudog, traceskip int) {
+    if s.releasetime != 0 {
+       s.releasetime = cputicks()
+    }
+    goready(s.g, traceskip)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;goready 通过 systemstack 调用ready 方法，systemstack会切换到g0栈执行ready 方法&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func goready(gp *g, traceskip int) {
+    systemstack(func() {
+       ready(gp, traceskip, true)
+    })
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;ready 中将g 的状态修改为&lt;code&gt;_Grunnable&lt;/code&gt;，并&lt;code&gt;runqput&lt;/code&gt;将g 加入到m的队尾，并尝试唤醒M，acquirem() 和releasem(mp)是相对的操作，用来对m进行锁操作。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Mark gp ready to run.
+func ready(gp *g, traceskip int, next bool) {
+    status := readgstatus(gp)
+
+    // Mark runnable.
+    mp := acquirem() // disable preemption because it can be holding p in a local var
+    if status&amp;amp;^_Gscan != _Gwaiting {
+       dumpgstatus(gp)
+       throw(&amp;#34;bad g-&amp;gt;status in ready&amp;#34;)
+    }
+
+    // status is Gwaiting or Gscanwaiting, make Grunnable and put on runq
+    trace := traceAcquire()
+    casgstatus(gp, _Gwaiting, _Grunnable)
+    if trace.ok() {
+       trace.GoUnpark(gp, traceskip)
+       traceRelease(trace)
+    }
+    runqput(mp.p.ptr(), gp, next)
+    wakep()
+    releasem(mp)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;systemstack和mcall&#34;&gt;systemstack和mcall&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;systemstack&lt;/code&gt;和&lt;code&gt;mcall&lt;/code&gt;都是 Go 语言运行时中用于切换到系统栈执行代码的函数，但它们存在一些区别，具体如下：&lt;/p&gt;
+&lt;p&gt;调用发起方限制不同：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;mcall&lt;/code&gt;只能由非&lt;code&gt;g0&lt;/code&gt;的 goroutine 发起切换到&lt;code&gt;g0&lt;/code&gt;栈执行函数，并且在执行完指定函数后不会跳转回原来的 goroutine 栈，而是直接结束当前 goroutine 的执行。&lt;code&gt;systemstack&lt;/code&gt;可以由普通的 goroutine 或者&lt;code&gt;g0&lt;/code&gt;自身发起切换，在完成其中闭包函数调用后，会切换回到原本的 goroutine 栈继续执行。&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/golang/">golang</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>mutex 探究</title>
+                <link>http://longchuanzheng.github.io/posts/go/mutex/mutex/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/go/mutex/mutex/</guid>
+                <pubDate>Fri, 17 Oct 2025 11:12:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;h2 id=&#34;mutex实现&#34;&gt;Mutex实现&lt;/h2&gt;
+&lt;p&gt;mutex 结构体如下，其中isync.Mutex包含一个int32，一个uint32 变量。state 代表是否锁住，sema是信号量触发等待的goroutine。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//package sync
+type Mutex struct {
+    _ noCopy
+    mu isync.Mutex
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//internal/sync
+type Mutex struct {
+    state int32
+    sema  uint32
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;lock方法&#34;&gt;Lock方法&lt;/h2&gt;
+&lt;p&gt;Lock()方法中，如果可以通过原子操作将state置为1则说明加锁成功，可以执行后续操作。若不行则说明已经被锁住，进入lockSlow。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Lock locks m.
+// If the lock is already in use, the calling goroutine
+// blocks until the mutex is available.
+func (m *Mutex) Lock() {
+    m.mu.Lock()
+}
+// Lock locks m.
+//
+// See package [sync.Mutex] documentation.
+func (m *Mutex) Lock() {
+	// Fast path: grab unlocked mutex.
+	if atomic.CompareAndSwapInt32(&amp;amp;m.state, 0, mutexLocked) {
+...
+		return
+	}
+	// Slow path (outlined so that the fast path can be inlined)
+	m.lockSlow()
+} 
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在lockSlow 中我们会遇到自旋，饥饿等概念。使得在锁被占用时，通过 “自旋尝试→信号量阻塞→唤醒后竞争” 的流程，确保 goroutine 能高效、公平地获取锁。&lt;/p&gt;
+&lt;h3 id=&#34;lockslow&#34;&gt;lockSlow&lt;/h3&gt;
+&lt;p&gt;从代码看：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;如果锁被占用则可进入自旋&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在自旋中，如果当前 goroutine 未被唤醒（&lt;code&gt;!awoke&lt;/code&gt;）、锁状态中无其他唤醒标记（&lt;code&gt;old&amp;amp;mutexWoken == 0&lt;/code&gt;）、存在等待者。则尝试通过 CAS 将 &lt;code&gt;mutexWoken&lt;/code&gt; 标记（&lt;code&gt;0b0010&lt;/code&gt;）设置到 &lt;code&gt;m.state&lt;/code&gt; 中，即 &lt;code&gt;old|mutexWoken&lt;/code&gt;，并将该goroutine 设置为awoke。这是为了让unlock 中不去唤醒等待队列中的goroutine。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;计算出希望更新的m.state 的状态：&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;1）如果非饥饿情况下，自旋结束以后 goroutine 可以尝试获取锁&lt;/p&gt;
+&lt;p&gt;2）当锁处于 “被持有状态” 或 “饥饿模式” 时，将等待者计数增加&lt;/p&gt;
+&lt;p&gt;3）当锁处于锁住的状态，并且唤醒的时间过长的情况，将锁置为饥饿状态&lt;/p&gt;
+&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;清除 &lt;code&gt;mutexWoken&lt;/code&gt; 标记，&lt;code&gt;mutexWoken&lt;/code&gt; 标记的作用是临时告诉 &lt;code&gt;Unlock&lt;/code&gt; 操作 “已有活跃的等待者”或反映当前没有 “待处理的唤醒信号”，当这个等待者开始实际处理锁竞争时，标记的使命就结束了，必须清除。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;更新m.state状态&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果获取到锁，则break&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;进入阻塞，被唤醒后计算阻塞时间&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;如果在饥饿状态则说明此goroutine 已经获取锁，更新m.state&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;没有处于饥饿状态则继续尝试获取锁（自旋）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;此处代码一些判断较为隐晦，大致意思较好理解，但细节需要推敲。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func (m *Mutex) lockSlow() {
+    var waitStartTime int64
+    starving := false
+    awoke := false
+    iter := 0
+    old := m.state
+    //直到
+    for {
+       //尝试自旋，直到锁不被持有
+       // Don&amp;#39;t spin in starvation mode, ownership is handed off to waiters
+       // so we won&amp;#39;t be able to acquire the mutex anyway.
+       if old&amp;amp;(mutexLocked|mutexStarving) == mutexLocked &amp;amp;&amp;amp; runtime_canSpin(iter) {
+          // Active spinning makes sense.
+          // Try to set mutexWoken flag to inform Unlock
+          // to not wake other blocked goroutines.
+          if !awoke &amp;amp;&amp;amp; old&amp;amp;mutexWoken == 0 &amp;amp;&amp;amp; old&amp;gt;&amp;gt;mutexWaiterShift != 0 &amp;amp;&amp;amp;
+             atomic.CompareAndSwapInt32(&amp;amp;m.state, old, old|mutexWoken) {
+             awoke = true
+          }
+          runtime_doSpin()
+          iter++
+          old = m.state
+          continue
+       }
+       // 更新m.state
+       new := old
+       // Don&amp;#39;t try to acquire starving mutex, new arriving goroutines must queue.
+       //在非饥饿情况下，自旋结束以后 goroutine 可以尝试获取锁
+       if old&amp;amp;mutexStarving == 0 {
+          new |= mutexLocked
+       }
+       //当锁处于 “被持有状态” 或 “饥饿模式” 时，将当前 goroutine 计入等待者计数
+       if old&amp;amp;(mutexLocked|mutexStarving) != 0 {
+          new += 1 &amp;lt;&amp;lt; mutexWaiterShift
+       }
+       // The current goroutine switches mutex to starvation mode.
+       // But if the mutex is currently unlocked, don&amp;#39;t do the switch.
+       // Unlock expects that starving mutex has waiters, which will not
+       // be true in this case.
+       //当锁处于锁住的状态，并且唤醒的时间过长的情况，将锁置为饥饿状态
+       if starving &amp;amp;&amp;amp; old&amp;amp;mutexLocked != 0 {
+          new |= mutexStarving
+       }
+       将mutexWoken标记撤销，准备下一步的尝试获取锁
+       if awoke {
+          // The goroutine has been woken from sleep,
+          // so we need to reset the flag in either case.
+          if new&amp;amp;mutexWoken == 0 {
+             throw(&amp;#34;sync: inconsistent mutex state&amp;#34;)
+          }
+          new &amp;amp;^= mutexWoken
+       }
+       //修改
+       if atomic.CompareAndSwapInt32(&amp;amp;m.state, old, new) {
+          //已获锁条件隐含在上面 old&amp;amp;mutexStarving == 0 中
+          if old&amp;amp;(mutexLocked|mutexStarving) == 0 {
+             //获取锁
+             break // locked the mutex with CAS
+          }
+          // If we were already waiting before, queue at the front of the queue.
+          queueLifo := waitStartTime != 0
+          if waitStartTime == 0 {
+             waitStartTime = runtime_nanotime()
+          }
+          //未或锁阻塞
+          runtime_SemacquireMutex(&amp;amp;m.sema, queueLifo, 2)
+          //计算阻塞时间，判断是否需要进入饥饿模式
+          starving = starving || runtime_nanotime()-waitStartTime &amp;gt; starvationThresholdNs
+          old = m.state
+          // 已经处于饥饿状态并且goroutine 正常运行，则说明已经获取锁
+          if old&amp;amp;mutexStarving != 0 {
+             // If this goroutine was woken and mutex is in starvation mode,
+             // ownership was handed off to us but mutex is in somewhat
+             // inconsistent state: mutexLocked is not set and we are still
+             // accounted as waiter. Fix that.
+             if old&amp;amp;(mutexLocked|mutexWoken) != 0 || old&amp;gt;&amp;gt;mutexWaiterShift == 0 {
+                throw(&amp;#34;sync: inconsistent mutex state&amp;#34;)
+             }
+             delta := int32(mutexLocked - 1&amp;lt;&amp;lt;mutexWaiterShift)
+             if !starving || old&amp;gt;&amp;gt;mutexWaiterShift == 1 {
+                // Exit starvation mode.
+                // Critical to do it here and consider wait time.
+                // Starvation mode is so inefficient, that two goroutines
+                // can go lock-step infinitely once they switch mutex
+                // to starvation mode.
+                delta -= mutexStarving
+             }
+             直接更新m.state
+             atomic.AddInt32(&amp;amp;m.state, delta)
+             break
+          }
+          awoke = true
+          iter = 0
+       } else {
+          old = m.state
+       }
+    }
+
+    if race.Enabled {
+       race.Acquire(unsafe.Pointer(m))
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;普通模式和饥饿模式&#34;&gt;普通模式和饥饿模式&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;Mutex&lt;/code&gt; 设计两种模式的根本原因是 “矛盾的平衡”：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;普通模式（默认）：优先追求&lt;strong&gt;性能&lt;/strong&gt;，允许正在运行的 goroutine （尤其是新到达的）优先抢占锁，避免频繁线程切换；&lt;/li&gt;
+&lt;li&gt;饥饿模式：优先保证&lt;strong&gt;公平性&lt;/strong&gt;，让等待最久的 goroutine 直接获取锁，防止其被持续抢占导致 “永远拿不到锁”（即 “饥饿”）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;普通模式normal-mode性能优先的竞争逻辑&#34;&gt;普通模式（Normal Mode）：性能优先的竞争逻辑&lt;/h4&gt;
+&lt;p&gt;注释中对普通模式的描述核心是 “&lt;strong&gt;等待者排队但不直接获锁，新 goroutine 有抢占优势&lt;/strong&gt;”，具体逻辑如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;等待者排队规则&lt;/strong&gt;：所有竞争锁失败的 goroutine 会按 “先进先出（FIFO）” 顺序加入等待队列，确保等待顺序的公平性；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;唤醒后的竞争&lt;/strong&gt;：当锁被释放（&lt;code&gt;Unlock&lt;/code&gt;）时，等待队列头部的 goroutine 会被唤醒，但它&lt;strong&gt;不直接拥有锁&lt;/strong&gt;—— 需要和 “新到达的 goroutine”（此时可能已在 CPU 上运行）竞争锁；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;新 goroutine 的优势&lt;/strong&gt;：新到达的 goroutine 已经在 CPU 上执行，且可能有多个同时竞争，因此被唤醒的等待者 “很可能竞争失败”；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;竞争失败的处理&lt;/strong&gt;：若等待者竞争失败，会重新回到等待队列的&lt;strong&gt;头部&lt;/strong&gt;（而非尾部），避免被后续新 goroutine 持续插队，保留下次优先竞争的机会。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;饥饿模式starvation-mode公平优先的移交逻辑&#34;&gt;饥饿模式（Starvation Mode）：公平优先的移交逻辑&lt;/h4&gt;
+&lt;p&gt;当等待者 “等待超过 1ms”（&lt;code&gt;starvationThresholdNs = 1e6&lt;/code&gt; 纳秒）时，&lt;code&gt;Mutex&lt;/code&gt; 会切换到饥饿模式，核心是 “&lt;strong&gt;锁直接移交，新 goroutine 不抢占&lt;/strong&gt;”，具体逻辑如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;模式切换触发条件&lt;/strong&gt;：若一个等待者竞争锁失败，且累计等待时间超过 1ms，会将 &lt;code&gt;Mutex&lt;/code&gt; 的状态设为 “饥饿模式”（通过 &lt;code&gt;mutexStarving&lt;/code&gt; 标记）；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;锁的直接移交&lt;/strong&gt;：在饥饿模式下，锁释放时（&lt;code&gt;Unlock&lt;/code&gt;），不会让新 goroutine 竞争，而是直接将锁 “移交” 给等待队列头部的 goroutine，确保等待最久的 goroutine 能拿到锁；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;新 goroutine 的行为&lt;/strong&gt;：新到达的 goroutine 即使发现锁 “看似未被持有”，也不会尝试抢占或自旋，而是直接加入等待队列的&lt;strong&gt;尾部&lt;/strong&gt;，乖乖排队，不干扰等待者；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;模式切换的核心目的&lt;/strong&gt;：解决 “普通模式下等待者被持续抢占” 的问题 —— 比如高并发场景中，新 goroutine 源源不断到达，等待者永远竞争失败，导致 “极端延迟”（尾延迟），饥饿模式通过强制移交锁避免这种病理情况。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;饥饿模式的退出条件回到性能优先&#34;&gt;饥饿模式的退出条件：回到性能优先&lt;/h4&gt;
+&lt;p&gt;饥饿模式虽然公平，但会损失性能（新 goroutine 无法抢占，可能导致 CPU 空闲），因此当满足以下两个条件之一时，会退出饥饿模式，回到普通模式：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;条件 1：当前等待者是队列中最后一个&lt;/strong&gt;：若拿到锁的等待者发现等待队列已空（没有其他等待者），说明无需再保证公平性，切换回普通模式；&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;条件 2：当前等待者等待时间不足 1ms&lt;/strong&gt;：若拿到锁的等待者此次等待时间很短（&amp;lt;1ms），说明当前竞争不激烈，没有 “饥饿风险”，切换回普通模式。&lt;/p&gt;
+&lt;h2 id=&#34;unlock-方法&#34;&gt;Unlock 方法&lt;/h2&gt;
+&lt;p&gt;当解锁后，如果发现mutex 状态需要其他处理如处于饥饿状态，则进入unlockSlow 方法&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Unlock unlocks m.
+//
+// See package [sync.Mutex] documentation.
+func (m *Mutex) Unlock() {
+    if race.Enabled {
+...
+    }
+
+    // Fast path: drop lock bit.
+    new := atomic.AddInt32(&amp;amp;m.state, -mutexLocked)
+    if new != 0 {
+       // Outlined slow path to allow inlining the fast path.
+       // To hide unlockSlow during tracing we skip one extra frame when tracing GoUnblock.
+       m.unlockSlow(new)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;unlockslow&#34;&gt;unlockSlow&lt;/h3&gt;
+&lt;p&gt;如果为非饥饿模式：&lt;/p&gt;
+&lt;p&gt;若没有等待者，或已有 goroutine 被唤醒/获取锁，则无需唤醒&lt;/p&gt;
+&lt;p&gt;否则唤醒一个等待者：等待者计数-1，设置唤醒标记（设置mutexWoken 可以阻止后续解锁操作唤醒groutine）&lt;/p&gt;
+&lt;p&gt;如果是饥饿模式：&lt;/p&gt;
+&lt;p&gt;那么仅需要唤醒一个等待队列中的goroutine&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func (m *Mutex) unlockSlow(new int32) {
+    //new 是 atomic.AddInt32(&amp;amp;m.state, -mutexLocked) 的结果（已清除 mutexLocked 标记）。若 (new + mutexLocked) 中不包含 mutexLocked 标记，说明解锁前锁就未被持有（即调用 Unlock 时锁处于未锁定状态），这是非法操作，直接崩溃（fatal）。
+    if (new+mutexLocked)&amp;amp;mutexLocked == 0 {
+       fatal(&amp;#34;sync: unlock of unlocked mutex&amp;#34;)
+    }
+    if new&amp;amp;mutexStarving == 0 {
+       old := new
+       for {
+          // If there are no waiters or a goroutine has already
+          // been woken or grabbed the lock, no need to wake anyone.
+          // In starvation mode ownership is directly handed off from unlocking
+          // goroutine to the next waiter. We are not part of this chain,
+          // since we did not observe mutexStarving when we unlocked the mutex above.
+          // So get off the way.
+          if old&amp;gt;&amp;gt;mutexWaiterShift == 0 || old&amp;amp;(mutexLocked|mutexWoken|mutexStarving) != 0 {
+             return
+          }
+          // Grab the right to wake someone.
+          new = (old - 1&amp;lt;&amp;lt;mutexWaiterShift) | mutexWoken
+          if atomic.CompareAndSwapInt32(&amp;amp;m.state, old, new) {
+             runtime_Semrelease(&amp;amp;m.sema, false, 2)
+             return
+          }
+          old = m.state
+       }
+    } else {
+       // Starving mode: handoff mutex ownership to the next waiter, and yield
+       // our time slice so that the next waiter can start to run immediately.
+       // Note: mutexLocked is not set, the waiter will set it after wakeup.
+       // But mutex is still considered locked if mutexStarving is set,
+       // so new coming goroutines won&amp;#39;t acquire it.
+       runtime_Semrelease(&amp;amp;m.sema, true, 2)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;mutexWoken&lt;/code&gt; 的作用是&lt;strong&gt;双向的&lt;/strong&gt;：&lt;/p&gt;
+&lt;p&gt;在 &lt;code&gt;unlockSlow&lt;/code&gt; 中：标记 “已唤醒一个等待者”，阻止重复唤醒；&lt;/p&gt;
+&lt;p&gt;在 &lt;code&gt;lockSlow&lt;/code&gt; 中：等待者主动标记 “我已准备好竞争”，让解锁者无需唤醒自己。&lt;/p&gt;
+&lt;p&gt;它是协调 “等待者自旋” 与 “解锁者唤醒” 的关键信号，既避免了惊群效应，又减少了不必要的阻塞 / 唤醒开销，是 &lt;code&gt;Mutex&lt;/code&gt; 性能优化的重要细节。&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/golang/">golang</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
+                        
+                    
+                
+            </item>
+        
+            <item>
+                <title>RWMutex 探究</title>
+                <link>http://longchuanzheng.github.io/posts/go/mutex/rwmutex/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/go/mutex/rwmutex/</guid>
+                <pubDate>Fri, 17 Oct 2025 11:12:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;golang 中 mutex 是标准的锁工具，在此使用 RWMutex 为例，介绍实现机制，本文中某些知识点在之前描述Mutex 的文章中提及，基于golang 1.24.5代码。&lt;/p&gt;
+&lt;p&gt;RWMutex  保证同一时刻可以存在多个读请求或一个写请求。&lt;/p&gt;
+&lt;p&gt;RWMutex 包含了Mutex 用于加解锁本结构体之外，还维护了&lt;code&gt;readerCount&lt;/code&gt;表示等待中的读操作（goroutine）数量，&lt;code&gt;readerWait&lt;/code&gt; 表示写操作需要等待的读操作数量。&lt;/p&gt;
+&lt;p&gt;当有读请求加锁时，若&lt;code&gt;readerCount&lt;/code&gt;为负数，则先阻塞，等待唤醒；若大于等于0，则将&lt;code&gt;readerCount&lt;/code&gt;加1，&lt;/p&gt;
+&lt;p&gt;当读请求解锁时，将&lt;code&gt;readerCount&lt;/code&gt;和&lt;code&gt;readerWait&lt;/code&gt;减一。唤醒阻塞的写请求&lt;/p&gt;
+&lt;p&gt;当有写请求加锁时，将原先&lt;code&gt;readerCount&lt;/code&gt;反转为负数。若&lt;code&gt;readerCount&lt;/code&gt; 不为0且&lt;code&gt;readerWait&lt;/code&gt;不为0，则阻塞等待唤醒。&lt;/p&gt;
+&lt;p&gt;当写请求解锁时，将&lt;code&gt;readerCount&lt;/code&gt;从负数反转为正数，并唤醒阻塞的读请求&lt;/p&gt;
+&lt;h2 id=&#34;使用方法&#34;&gt;使用方法&lt;/h2&gt;
+&lt;p&gt;为了实现锁，golang 中通常使用，RWMutex 使用方法大致如下，在对象中包含*sync.RWMutex&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;type Config struct {
+    configMutex *sync.RWMutex
+    config      clusterConfigurer
+    state       map[string]*State
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;当代码中可能存在并发修改对象中值的情况，使用Lock 方法加锁后修改，然后再解锁。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;c.configMutex.Lock()
+c.state[string(UID)] = state
+c.configMutex.Unlock()
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;若需要读数据并且希望不被写操作影响，可以使用RLock() 方法&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;c.configMutex.RLock()
+state, ok := c.state[string(UID)]
+c.configMutex.RUnlock()
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;rwmutex实现&#34;&gt;RWMutex实现&lt;/h2&gt;
+&lt;p&gt;RWMutex 的实现中包含了一个Mutex，其中writerSem,readerSem 分别代表读写完成的信号量（后文中会解释）。readerCount表示等待中的读操作（goroutine）数量，readerWait 表示写操作需要等待的读操作数量。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;type RWMutex struct {
+    w           Mutex        // held if there are pending writers
+    writerSem   uint32       // semaphore for writers to wait for completing readers
+    readerSem   uint32       // semaphore for readers to wait for completing writers
+    readerCount atomic.Int32 // number of pending readers
+    readerWait  atomic.Int32 // number of departing readers
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;lock-方法&#34;&gt;lock 方法&lt;/h3&gt;
+&lt;p&gt;在 RWMutex 的 lock 方法中，race.Enabled 里的逻辑用于调试跟踪锁的访问，检测数据竞争问题。w.Lock() 之后首先获取当前存在的 reader 数量。并将readerCount 置为负数，r != 0 &amp;amp;&amp;amp; rw.readerWait.Add(r) != 0 判断了当前存在的读操作的数量。若读操作数量大于0 则通过&lt;code&gt;runtime_SemacquireRWMutex&lt;/code&gt; 方法与m 解绑，阻塞并等待&amp;amp;rw.writerSem信号量。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Lock locks rw for writing.
+// If the lock is already locked for reading or writing,
+// Lock blocks until the lock is available.
+func (rw *RWMutex) Lock() {
+...
+    // First, resolve competition with other writers.
+    rw.w.Lock()
+    // Announce to readers there is a pending writer.
+    r := rw.readerCount.Add(-rwmutexMaxReaders) + rwmutexMaxReaders
+    // Wait for active readers.
+    if r != 0 &amp;amp;&amp;amp; rw.readerWait.Add(r) != 0 {
+       runtime_SemacquireRWMutex(&amp;amp;rw.writerSem, false, 0)
+    }
+...
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;blockquote&gt;
+&lt;p&gt;在此讨论一下为什么需要判断rw.readerWait.Add(r) != 0，我们需要从RUnlock() 方法入手&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func (rw *RWMutex) RUnlock() {
+    if r := rw.readerCount.Add(-1); r &amp;lt; 0 {
+       // Outlined slow-path to allow the fast-path to be inlined
+       rw.rUnlockSlow(r)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;可以看到如果存当前存在写操作（readerCount&amp;lt;0 != 0）则进入rUnlockSlow&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func (rw *RWMutex) rUnlockSlow(r int32) {
+    if rw.readerWait.Add(-1) == 0 {
+       // The last reader unblocks the writer.
+       runtime_Semrelease(&amp;amp;rw.writerSem, false, 1)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;将 readerWait -1 如果这时候 readerWait 为 0 则唤醒写信号量，这时候卡在runtime_SemacquireRWMutex(&amp;amp;rw.writerSem, false, 0) 处的程序将向后执行。&lt;/p&gt;
+&lt;p&gt;因此可能出现极端情况，当写操作准备等待读操作时，若读操作恰好已全部完成（导致 &lt;code&gt;readerWait&lt;/code&gt; 累加后为 0），则写操作无需阻塞，可直接继续执行。&lt;/p&gt;
+&lt;p&gt;//r = 5&lt;/p&gt;
+&lt;p&gt;r := rw.readerCount.Add(-rwmutexMaxReaders) + rwmutexMaxReaders&lt;/p&gt;
+&lt;p&gt;//读操作完成 readerWait = -5 ，r != 0 但 rw.readerWait.Add(r) = 0&lt;/p&gt;
+&lt;p&gt;if r != 0 &amp;amp;&amp;amp; rw.readerWait.Add(r) != 0 {&lt;/p&gt;
+&lt;p&gt;}&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;因此可以概况为：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先通过互斥锁与其他写操作竞争；&lt;/li&gt;
+&lt;li&gt;标记 “有写等待”，阻止新读操作进入；&lt;/li&gt;
+&lt;li&gt;等待所有当前活跃的读操作完成；&lt;/li&gt;
+&lt;li&gt;最终获得写锁，确保独占访问。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;rlock-方法&#34;&gt;RLock 方法&lt;/h3&gt;
+&lt;p&gt;在RLock 方法中，将readerCount 加1，若readerCount&amp;lt;0（有写操作），则等待readerSem读信号量，若无写操作，则直接获取。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func (rw *RWMutex) RLock() {
+...
+    if rw.readerCount.Add(1) &amp;lt; 0 {
+       // A writer is pending, wait for it.
+       runtime_SemacquireRWMutexR(&amp;amp;rw.readerSem, false, 0)
+    }
+...
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;runlock方法&#34;&gt;RUnlock方法&lt;/h3&gt;
+&lt;p&gt;RUnlock方法中，将readerCount 减1，若这时readerCount &amp;lt;0 ，说明有写操作阻塞，需要进入rw.rUnlockSlow(r)&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// RUnlock undoes a single [RWMutex.RLock] call;
+// it does not affect other simultaneous readers.
+// It is a run-time error if rw is not locked for reading
+// on entry to RUnlock.
+func (rw *RWMutex) RUnlock() {
+...
+    if r := rw.readerCount.Add(-1); r &amp;lt; 0 {
+       // Outlined slow-path to allow the fast-path to be inlined
+       rw.rUnlockSlow(r)
+    }
+...
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;将rw.readerWait 减一，直到rw.readerWait 为0 的时候通过rw.writerSem信号量，唤醒正在等待的写操作。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;func (rw *RWMutex) rUnlockSlow(r int32) {
+...
+    // A writer is pending.
+    if rw.readerWait.Add(-1) == 0 {
+       // The last reader unblocks the writer.
+       runtime_Semrelease(&amp;amp;rw.writerSem, false, 1)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;unlock方法&#34;&gt;Unlock方法&lt;/h3&gt;
+&lt;p&gt;在unlock 方法中，将readerCount 从负数更新为正数，这时readerCount  是正在阻塞的读操作，通过readerSem 读信号量将其唤醒。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Unlock unlocks rw for writing. It is a run-time error if rw is
+// not locked for writing on entry to Unlock.
+//
+// As with Mutexes, a locked [RWMutex] is not associated with a particular
+// goroutine. One goroutine may [RWMutex.RLock] ([RWMutex.Lock]) a RWMutex and then
+// arrange for another goroutine to [RWMutex.RUnlock] ([RWMutex.Unlock]) it.
+func (rw *RWMutex) Unlock() {
+    if race.Enabled {
+       race.Read(unsafe.Pointer(&amp;amp;rw.w))
+       race.Release(unsafe.Pointer(&amp;amp;rw.readerSem))
+       race.Disable()
+    }
+
+    // Announce to readers there is no active writer.
+    r := rw.readerCount.Add(rwmutexMaxReaders)
+    if r &amp;gt;= rwmutexMaxReaders {
+       race.Enable()
+       fatal(&amp;#34;sync: Unlock of unlocked RWMutex&amp;#34;)
+    }
+    // Unblock blocked readers, if any.
+    for i := 0; i &amp;lt; int(r); i++ {
+       runtime_Semrelease(&amp;amp;rw.readerSem, false, 0)
+    }
+    // Allow other writers to proceed.
+    rw.w.Unlock()
+    if race.Enabled {
+       race.Enable()
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/golang/">golang</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>使用LUKS加密磁盘</title>
