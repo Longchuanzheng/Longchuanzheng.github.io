@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-10-17T11:14:07&#43;08:00</updated>
+    <updated>2025-10-29T11:30:33&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -16,6 +16,377 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
+        <entry>
+            <title type="text">Kubeadm 代码走读</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/kubeadm/kubeadm/" />
+            <id>http://longchuanzheng.github.io/posts/kubernetes/kubeadm/kubeadm/</id>
+            <updated>2025-10-29T11:30:18&#43;08:00</updated>
+            <published>2025-10-29T11:30:00&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">kubeadm 用于启动kubernetes，包含子命令init，join 等，可以创建集群，将节点……</summary>
+            
+                <content type="html">&lt;p&gt;kubeadm 用于启动kubernetes，包含子命令&lt;code&gt;init&lt;/code&gt;，&lt;code&gt;join&lt;/code&gt; 等，可以创建集群，将节点加入现有集群。也可以用phase 命令指定具体执行的子命令。本文主要关注&lt;code&gt;Init&lt;/code&gt; 和&lt;code&gt;Join&lt;/code&gt;的流程和 phase 实现方式。&lt;/p&gt;
+&lt;h2 id=&#34;实现简述&#34;&gt;实现简述&lt;/h2&gt;
+&lt;p&gt;kubadm 作为工具，包含多个子命令，并不会常驻内存，主要通过cobra 包将各个命令包装。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// Run creates and executes new kubeadm command
+func Run() error {
+    klog.InitFlags(nil)
+    pflag.CommandLine.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
+    pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+    pflag.Set(&amp;#34;logtostderr&amp;#34;, &amp;#34;true&amp;#34;)
+    // We do not want these flags to show up in --help
+    // These MarkHidden calls must be after the lines above
+    pflag.CommandLine.MarkHidden(&amp;#34;version&amp;#34;)
+...
+    pflag.CommandLine.MarkHidden(&amp;#34;vmodule&amp;#34;)
+
+    cmd := cmd.NewKubeadmCommand(os.Stdin, os.Stdout, os.Stderr)
+    return cmd.Execute()
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在 &lt;code&gt;NewKubeadmCommand &lt;/code&gt;中注册相关的命令，&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cmds.AddCommand(newCmdInit(out, nil))
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;AddCommand 会将命令加入到parent 命令（&lt;code&gt;kubeadm&lt;/code&gt;）中，这些命令首先会创建Runner，并且创建phase 并将phase 和命令绑定，这个绑定主要实现了根据 phase 创建子命令，实现了可以使用&lt;code&gt;phase&lt;/code&gt; 子命令去指定执行需要的子命令。主要流程如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;创建 Runner：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;runner := workflow.NewRunner()
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;添加 Phase，将phase 添加到runner 的Phases 列表中，phase 也可以有子phase：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;runner.AppendPhase(phase1)
+runner.AppendPhase(phase2)
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;绑定命令，并生成子命令层级：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;runner.BindToCommand(cmd)
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;指定执行 Phase：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubeadm phase some-phase
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;ai-模拟效果&#34;&gt;AI 模拟效果&lt;/h3&gt;
+&lt;p&gt;假设有以下 Phase 层级：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;printDefaultPhase := Phase{Name: &amp;#34;print-default&amp;#34;}
+migratePhase := Phase{Name: &amp;#34;migrate&amp;#34;}
+configPhase := Phase{
+    Name:   &amp;#34;Config&amp;#34;,
+    Phases: []Phase{printDefaultPhase, migratePhase},
+}
+initPhase := Phase{
+    Name:   &amp;#34;init&amp;#34;,
+    Phases: []Phase{configPhase},
+}
+runner := workflow.NewRunner()
+runner.AppendPhase(initPhase)
+runner.BindToCommand(initCmd)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;那么绑定完成后，命令行的结构和功能如下：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubeadm init phase
+# 输出：
+# Use this command to invoke single phase of the &amp;#34;init&amp;#34; workflow
+# Available Commands:
+#   Config      Manage kubeadm configuration
+
+kubeadm init phase Config
+# 输出：
+# Manage kubeadm configuration
+# Available Commands:
+#   print-default   Print the default configuration for kubeadm
+#   migrate         Migrate an old configuration to a new version
+
+kubeadm init phase Config print-default
+# 输出：
+# Default configuration printed.
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;bindtocommand&#34;&gt;BindToCommand&lt;/h3&gt;
+&lt;p&gt;在&lt;code&gt;BindToCommand&lt;/code&gt; 中 首先通过e.prepareForExecution() 将runner 中的phase 队列处理成phaseRunner，phaseRunner 中根据 phase 的层级生成了&lt;code&gt;generatedName&lt;/code&gt;，&lt;code&gt;selfPath&lt;/code&gt;，&lt;code&gt;level&lt;/code&gt; 等信息。后续根据&lt;code&gt;phaseRunner&lt;/code&gt;生成cmd 并且和主命令绑定。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// prepareForExecution initialize the internal state of the Runner (the list of phaseRunner).
+func (e *Runner) prepareForExecution() {
+    e.phaseRunners = []*phaseRunner{}
+    var parentRunner *phaseRunner
+    for _, phase := range e.Phases {
+       // skips phases that are meant to create special subcommands only
+       if phase.RunAllSiblings {
+          continue
+       }
+
+       // add phases to the execution list
+       addPhaseRunner(e, parentRunner, phase)
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在&lt;code&gt;addPhaseRunner&lt;/code&gt;中通过递归，将子phase 加入到当前PhaseRunner 的子集中。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//addPhaseRunner
+for _, childPhase := range phase.Phases {
+    addPhaseRunner(e, currentRunner, childPhase)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;visitAll 中对于每个phaseRunner 执行内联函数，&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// visitAll provides a utility method for visiting all the phases in the workflow
+// in the execution order and executing a func on each phase.
+// Nested phase are visited immediately after their parent phase.
+func (e *Runner) visitAll(fn func(*phaseRunner) error) error {
+    for _, currentRunner := range e.phaseRunners {
+       if err := fn(currentRunner); err != nil {
+          return err
+       }
+    }
+    return nil
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;也是通过递归，将子PhaseRunner 生成的cmd Add 到父cmd 中，实现了通过phase 选定执行某个子命令。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;if p.level == 0 {
+    phaseCommand.AddCommand(phaseCmd)
+} else {
+    subcommands[p.parent.generatedName].AddCommand(phaseCmd)
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;init-命令&#34;&gt;Init 命令&lt;/h2&gt;
+&lt;p&gt;在newCmdInit 中，创建了init 命令，并且创建了多个phase ，并将phase 和&lt;code&gt;init&lt;/code&gt; 命令绑定，这个绑定主要实现了根据 phase 创建子命令，实现了可以使用&lt;code&gt;phase&lt;/code&gt; 子命令去指定执行需要的子命令。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// newCmdInit returns &amp;#34;kubeadm init&amp;#34; command.
+// NB. initOptions is exposed as parameter for allowing unit testing of
+// the newInitOptions method, that implements all the command options validation logic
+func newCmdInit(out io.Writer, initOptions *initOptions) *cobra.Command {
+    if initOptions == nil {
+       initOptions = newInitOptions()
+    }
+    initRunner := workflow.NewRunner()
+
+    cmd := &amp;amp;cobra.Command{
+       Use:   &amp;#34;init&amp;#34;,
+       Short: &amp;#34;Run this command in order to set up the Kubernetes control plane&amp;#34;,
+       RunE: func(cmd *cobra.Command, args []string) error {
+          c, err := initRunner.InitData(args)
+          if err != nil {
+             return err
+          }
+
+          data := c.(*initData)
+          fmt.Printf(&amp;#34;[init] Using Kubernetes version: %s\n&amp;#34;, data.cfg.KubernetesVersion)
+
+          return initRunner.Run(args)
+       },
+       Args: cobra.NoArgs,
+    }
+
+...
+//在runner 中添加phase
+    // initialize the workflow runner with the list of phases
+    initRunner.AppendPhase(phases.NewPreflightPhase())
+    initRunner.AppendPhase(phases.NewCertsPhase())
+    initRunner.AppendPhase(phases.NewKubeConfigPhase())
+    initRunner.AppendPhase(phases.NewKubeletStartPhase())
+    initRunner.AppendPhase(phases.NewControlPlanePhase())
+    initRunner.AppendPhase(phases.NewEtcdPhase())
+    initRunner.AppendPhase(phases.NewWaitControlPlanePhase())
+    initRunner.AppendPhase(phases.NewUploadConfigPhase())
+    initRunner.AppendPhase(phases.NewUploadCertsPhase())
+    initRunner.AppendPhase(phases.NewMarkControlPlanePhase())
+    initRunner.AppendPhase(phases.NewBootstrapTokenPhase())
+    initRunner.AppendPhase(phases.NewKubeletFinalizePhase())
+    initRunner.AppendPhase(phases.NewAddonPhase())
+    initRunner.AppendPhase(phases.NewShowJoinCommandPhase())
+...
+//绑定runner 和 init cmd
+    // binds the Runner to kubeadm init command by altering
+    // command help, adding --skip-phases flag and by adding phases subcommands
+    initRunner.BindToCommand(cmd)
+
+    return cmd
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;如果执行&lt;code&gt;init&lt;/code&gt;命令，那么就会执行如下一些步骤：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//检查基础环境，内存，numa，等
+preflight                    Run pre-flight checks
+//创建对应的公私钥 默认目录在/etc/kubernetes/pki 
+certs                        Certificate generation
+  /ca                          Generate the self-signed Kubernetes CA to provision identities for other Kubernetes components
+  /apiserver                   Generate the certificate for serving the Kubernetes API
+  /apiserver-kubelet-client    Generate the certificate for the API server to connect to kubelet
+  /front-proxy-ca              Generate the self-signed CA to provision identities for front proxy
+  /front-proxy-client          Generate the certificate for the front proxy client
+  /etcd-ca                     Generate the self-signed CA to provision identities for etcd
+  /etcd-server                 Generate the certificate for serving etcd
+  /etcd-peer                   Generate the certificate for etcd nodes to communicate with each other
+  /etcd-healthcheck-client     Generate the certificate for liveness probes to healthcheck etcd
+  /apiserver-etcd-client       Generate the certificate the apiserver uses to access etcd
+  /sa                          Generate a private key for signing service account tokens along with its public key
+// //生成生成 Kubernetes 集群组件使用的配置文件，api-sever 等组件，包含证书文件
+kubeconfig                   Generate all kubeconfig files necessary to establish the control plane and the admin kubeconfig 
+file
+  /admin                       Generate a kubeconfig file for the admin to use and for kubeadm itself
+  /super-admin                 Generate a kubeconfig file for the super-admin
+  /kubelet                     Generate a kubeconfig file for the kubelet to use *only* for cluster bootstrapping purposes
+  /controller-manager          Generate a kubeconfig file for the controller manager to use
+  /scheduler                   Generate a kubeconfig file for the scheduler to use
+//生成 etcd 的静态 Pod 文件
+etcd                         Generate static Pod manifest file for local etcd
+  /local                       Generate the static Pod manifest file for a local, single-node local etcd instance
+//生成 Kubernetes 控制平面组件所需的静态 Pod 文件
+control-plane                Generate all static Pod manifest files necessary to establish the control plane
+  /apiserver                   Generates the kube-apiserver static Pod manifest
+  /controller-manager          Generates the kube-controller-manager static Pod manifest
+  /scheduler                   Generates the kube-scheduler static Pod manifest
+//写入 Kubelet 的配置并启动或重新启动 Kubelet 服务
+kubelet-start                Write kubelet settings and (re)start the kubelet
+//将 kubeadm 和 Kubelet 的配置上传到 ConfigMap
+upload-config                Upload the kubeadm and kubelet configuration to a ConfigMap
+  /kubeadm                     Upload the kubeadm ClusterConfiguration to a ConfigMap
+  /kubelet                     Upload the kubelet component config to a ConfigMap
+//将证书上传到 kubeadm-certs Secret 中
+upload-certs                 Upload certificates to kubeadm-certs
+//标记节点为控制平面节点
+mark-control-plane           Mark a node as a control-plane
+//生成用于将工作节点加入集群的引导令牌（bootstrap token）
+bootstrap-token              Generates bootstrap tokens used to join a node to a cluster
+//更新 Kubelet 的相关设置
+kubelet-finalize             Updates settings relevant to the kubelet after TLS bootstrap
+  /experimental-cert-rotation  Enable kubelet client certificate rotation
+//安装 Kubernetes 集群所需的附加组件
+addon                        Install required addons for passing conformance tests
+  /coredns                     Install the CoreDNS addon to a Kubernetes cluster
+  /kube-proxy                  Install the kube-proxy addon to a Kubernetes cluster
+//显示将控制平面节点和工作节点加入集群的命令
+show-join-command            Show the join command for control-plane and worker node
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;工作流程&#34;&gt;工作流程&lt;/h3&gt;
+&lt;p&gt;&lt;code&gt;kubeadm init&lt;/code&gt; 通过执行以下步骤引导 Kubernetes 控制平面节点&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;运行一系列预检以验证系统状态，然后再进行更改。一些检查只会触发警告，另一些被认为是错误，并将退出 kubeadm，直到问题得到纠正或用户指定&lt;code&gt;--ignore-preflight-errors=&amp;lt;list-of-errors&amp;gt;&lt;/code&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;生成自签名 CA 以设置集群中每个组件的身份。用户可以通过将自己的 CA 证书和/或密钥放到通过&lt;code&gt;--cert-dir&lt;/code&gt;（默认情况下为&lt;code&gt;/etc/kubernetes/pki&lt;/code&gt;）配置的证书目录中来提供自己的 CA 证书和/或密钥。APIServer 证书将为任何&lt;code&gt;--apiserver-cert-extra-sans&lt;/code&gt; 参数添加额外的 SAN 条目，如果需要，将转换为小写。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;在&lt;code&gt;/etc/kubernetes/&lt;/code&gt; 中写入 kubelet、控制器管理器和调度程序使用的 kubeconfig 文件，以连接到 API 服务器，每个文件都有自己的身份。此外，还将写入其他 kubeconfig 文件，用于 kubeadm 作为管理实体（&lt;code&gt;admin.conf&lt;/code&gt;）和用于可以绕过 RBAC 的超级管理员用户（&lt;code&gt;super-admin.conf&lt;/code&gt;）。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;为 API 服务器、控制器管理器和调度程序生成静态 Pod 清单。如果未提供外部 etcd，则会为 etcd 生成额外的静态 Pod 清单。&lt;/p&gt;
+&lt;p&gt;静态 Pod 清单将写入&lt;code&gt;/etc/kubernetes/manifests&lt;/code&gt;；kubelet 在启动时监视此目录以创建 Pod。&lt;/p&gt;
+&lt;p&gt;一旦控制平面 Pod 运行起来，&lt;code&gt;kubeadm init&lt;/code&gt; 序列就可以继续。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;将标签和污点应用于控制平面节点，以便不会在其中运行其他工作负载。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;生成其他节点将来可以使用该令牌向控制平面注册的令牌。用户可以选择通过&lt;code&gt;--token&lt;/code&gt;提供令牌，如&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-token/&#34;&gt;kubeadm 令牌&lt;/a&gt; 文档中所述。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;对使用&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/access-authn-authz/bootstrap-tokens/&#34;&gt;引导令牌&lt;/a&gt; 和&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/&#34;&gt;TLS 引导&lt;/a&gt; 机制加入节点进行所有必要的配置&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;写入一个 ConfigMap，以提供加入所需的所有信息，并设置相关的 RBAC 访问规则。&lt;/li&gt;
+&lt;li&gt;允许引导令牌访问 CSR 签名 API。&lt;/li&gt;
+&lt;li&gt;为新的 CSR 请求配置自动批准。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;有关更多信息，请参阅&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&#34;&gt;kubeadm join&lt;/a&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;通过 API 服务器安装 DNS 服务器 (CoreDNS) 和 kube-proxy 附加组件。在 Kubernetes 版本 1.11 及更高版本中，CoreDNS 是默认的 DNS 服务器。请注意，尽管部署了 DNS 服务器，但它不会在安装 CNI 之前进行调度。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;join命令&#34;&gt;join命令&lt;/h2&gt;
+&lt;p&gt;join命令也是类似的代码结构，创建runner，add phase 最后BindToCommand。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;// newCmdJoin returns &amp;#34;kubeadm join&amp;#34; command.
+// NB. joinOptions is exposed as parameter for allowing unit testing of
+// the newJoinData method, that implements all the command options validation logic
+func newCmdJoin(out io.Writer, joinOptions *joinOptions) *cobra.Command {
+    if joinOptions == nil {
+       joinOptions = newJoinOptions()
+    }
+    joinRunner := workflow.NewRunner()
+
+    cmd := &amp;amp;cobra.Command{
+ ...
+    }
+
+    addJoinConfigFlags(cmd.Flags(), joinOptions.externalcfg)
+    addJoinOtherFlags(cmd.Flags(), joinOptions)
+
+    joinRunner.AppendPhase(phases.NewPreflightPhase())
+    joinRunner.AppendPhase(phases.NewControlPlanePreparePhase())
+    joinRunner.AppendPhase(phases.NewCheckEtcdPhase())
+    joinRunner.AppendPhase(phases.NewKubeletStartPhase())
+    joinRunner.AppendPhase(phases.NewControlPlaneJoinPhase())
+
+ ...
+    // binds the Runner to kubeadm join command by altering
+    // command help, adding --skip-phases flag and by adding phases subcommands
+    joinRunner.BindToCommand(cmd)
+
+    return cmd
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;主要包含5个步骤&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//运行加入节点之前的预检，确保节点符合加入 Kubernetes 集群的要求。
+preflight              Run join pre-flight checks
+control-plane-prepare  Prepare the machine for serving a control plane
+//从 kubeadm-certs Secret 中下载共享的控制平面证书。
+  /download-certs        [EXPERIMENTAL] Download certificates shared among control-plane nodes from the kubeadm-certs Secret
+//为新控制平面组件生成所需的证书（如 API Server、Controller Manager 等）
+  /certs                 Generate the certificates for the new control plane components
+//为新控制平面组件（如 API Server、Controller Manager、Scheduler）生成所需的 kubeconfig 文件
+  /kubeconfig            Generate the kubeconfig for the new control plane components
+//为新控制平面组件生成静态 Pod 清单文件
+  /control-plane         Generate the manifests for the new control plane components
+//配置 kubelet 并重新启动它，使其能够启动控制平面组件。
+kubelet-start          Write kubelet settings, certificates and (re)start the kubelet
+//将当前机器加入集群并作为一个控制平面实例
+control-plane-join     Join a machine as a control plane instance
+//将本地 etcd 成员添加到集群的 etcd 集群中。
+  /etcd                  Add a new local etcd member
+//将新控制平面节点注册到 kubeadm-config ConfigMap 的 ClusterStatus 中
+  /update-status         Register the new control-plane node into the ClusterStatus maintained in the kubeadm-config ConfigMap (DEPRECATED)
+  //将当前节点标记为控制平面节点
+  /mark-control-plane    Mark a node as a control-plane
+//等待控制平面组件在当前节点启动并运行
+wait-control-plane     EXPERIMENTAL: Wait for the control plane to start
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;值得注意的是etcd 是在kubelet 启动后静态pod 启动，最后才加入etcd 集群，流程上 etcd 身份的加入节点和 etcd 静态 pod的创建是独立的。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;if isDryRun {
+    fmt.Printf(&amp;#34;[etcd] Would add etcd member: %s\n&amp;#34;, etcdPeerAddress)
+} else {
+    klog.V(1).Infof(&amp;#34;[etcd] Adding etcd member: %s&amp;#34;, etcdPeerAddress)
+    if features.Enabled(cfg.FeatureGates, features.EtcdLearnerMode) {
+       cluster, err = etcdClient.AddMemberAsLearner(nodeName, etcdPeerAddress)
+    } else {
+       cluster, err = etcdClient.AddMember(nodeName, etcdPeerAddress)
+    }
+...
+}
+...
+if err := prepareAndWriteEtcdStaticPod(manifestDir, patchesDir, cfg, endpoint, nodeName, cluster, isDryRun); err != nil {
+    return err
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&lt;/a&gt;&lt;/p&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/kubernetes/" term="kubernetes" label="kubernetes" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">goroutine 阻塞和唤醒</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/go/mutex/semaacquireandrelease/" />
