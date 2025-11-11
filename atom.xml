@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh-CN">
     <title type="text">My way, the end is...</title>
     <subtitle type="html">Longchuanzhengの个人博客:)</subtitle>
-    <updated>2025-10-29T11:30:33&#43;08:00</updated>
+    <updated>2025-11-11T15:39:22&#43;08:00</updated>
     <id>http://longchuanzheng.github.io/</id>
     <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/" />
     <link rel="self" type="application/atom&#43;xml" href="http://longchuanzheng.github.io/atom.xml" />
@@ -17,10 +17,203 @@
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights>
     <generator uri="https://gohugo.io/" version="0.110.0">Hugo</generator>
         <entry>
+            <title type="text">kubernetes 权限初探</title>
+            <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/kubernetes-cert/kubernetes-cert/" />
+            <id>http://longchuanzheng.github.io/posts/kubernetes/kubernetes-cert/kubernetes-cert/</id>
+            <updated>2025-11-11T15:37:22&#43;08:00</updated>
+            <published>2025-11-11T15:37:05&#43;08:00</published>
+            <author>
+                    <name>Longchuanzheng</name>
+                    <uri>http://longchuanzheng.github.io/</uri>
+                    <email>zal42@outlook.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</rights><summary type="html">在kubernetes 中没有对应的资源去代表用户和用户组，外部用户如果需要访问k8s……</summary>
+            
+                <content type="html">&lt;p&gt;在kubernetes 中没有对应的资源去代表用户和用户组，外部用户如果需要访问k8s 集群，需要生成公私钥后，向 k8s 管理员提供CSR或者向管理员根据公钥由管理员生成CSR，CSR 中指定了用户和用户组，然后管理员根据CSR 创建 CertificateSigningRequest 对象。k8s 中的授权组件处理CertificateSigningRequest  对象，填入生成用户的证书。将用户和用户组通过ClusterRoleBinding与clusterRole 绑定来获取clusterRole  指定的权限。用户可以通过这个证书去访问clusterRole 中描述的资源。&lt;/p&gt;
+&lt;h2 id=&#34;证书生成&#34;&gt;证书生成&lt;/h2&gt;
+&lt;h3 id=&#34;生成密钥&#34;&gt;生成密钥&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;openssl genrsa -out device-1.key 2048
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;生成csr&#34;&gt;生成CSR&lt;/h3&gt;
+&lt;p&gt;CSR（Certificate Signing Request）文件是SSL证书申请过程中的核心文件，包括的信息：&lt;/p&gt;
+&lt;p&gt;1）公钥信息：由服务器私钥配对生成，用于加密数据传输。&lt;/p&gt;
+&lt;p&gt;2）主体信息：&lt;/p&gt;
+&lt;p&gt;通用名称（CN）：必须填写申请证书的主域名（如example.com）。&lt;/p&gt;
+&lt;p&gt;组织信息（O）：申请证书的企业或机构名称。&lt;/p&gt;
+&lt;p&gt;所在地信息（C、ST、L）：国家、省份、城市等地理信息。&lt;/p&gt;
+&lt;p&gt;密钥算法和长度：如RSA 2048位、4096位，或ECC算法。&lt;/p&gt;
+&lt;p&gt;这些信息通过服务器私钥进行数字签名，确保数据在提交给证书颁发机构（CA）时不可篡改，并证明申请方拥有对应的私钥。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;# 生成证书签名请求（CSR），指定身份信息（CN为用户名，O为用户组）
+# 这里模拟设备属于 &amp;#34;devices&amp;#34; 组
+openssl req -new -key device-1.key -out device-1.csr \
+  -subj &amp;#34;/CN=device-1/O=devices&amp;#34;
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;创建-certificatesigningrequest&#34;&gt;创建 CertificateSigningRequest&lt;/h3&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;# 通过 Kubernetes API 创建 CertificateSigningRequest 资源
+cat &amp;lt;&amp;lt;EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: device-1-csr
+spec:
+  request: $(cat device-1.csr | base64 | tr -d &amp;#39;\n&amp;#39;)  # CSR内容Base64编码
+  signerName: kubernetes.io/kube-apiserver-client  # 客户端证书签名者
+  usages:
+  - client auth  # 用途：客户端认证
+EOF
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;其中&lt;code&gt;signerName&lt;/code&gt; 和 &lt;code&gt;usages&lt;/code&gt; 是两个核心字段，分别用于 指定证书的签名者 和 限制证书的用途。&lt;code&gt;signerName&lt;/code&gt; 主要包括以下几类：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;//pkg/apis/certificates/types.go
+// Signs certificates that will be honored as client-certs by the
+// kube-apiserver. Never auto-approved by kube-controller-manager.
+KubeAPIServerClientSignerName = &amp;#34;kubernetes.io/kube-apiserver-client&amp;#34;
+
+// Signs client certificates that will be honored as client-certs by the
+// kube-apiserver for a kubelet.
+// May be auto-approved by kube-controller-manager.
+KubeAPIServerClientKubeletSignerName = &amp;#34;kubernetes.io/kube-apiserver-client-kubelet&amp;#34;
+
+// Signs serving certificates that are honored as a valid kubelet serving
+// certificate by the kube-apiserver, but has no other guarantees.
+KubeletServingSignerName = &amp;#34;kubernetes.io/kubelet-serving&amp;#34;
+
+// Has no guarantees for trust at all. Some distributions may honor these
+// as client certs, but that behavior is not standard kubernetes behavior.
+LegacyUnknownSignerName = &amp;#34;kubernetes.io/legacy-unknown&amp;#34;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;usages&lt;/code&gt; 字段用于定义 &lt;strong&gt;生成的证书可以被用来做什么&lt;/strong&gt;（即证书的 “扩展用途”），是 TLS 证书标准中的核心安全限制（防止证书被滥用）。这里指定的 &lt;code&gt;client auth&lt;/code&gt; 表示该证书仅能用于 &lt;strong&gt;TLS 客户端认证&lt;/strong&gt;（Client Authentication），即作为 “客户端身份凭证” 向服务器（这里是 API Server）证明自己的身份。&lt;/p&gt;
+&lt;p&gt;Kubernetes 支持的证书用途遵循 X.509 证书标准，常见取值包括：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;server auth&lt;/code&gt;：服务器端认证（证书用于服务器向客户端证明身份，如 API Server 的证书）；&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;code signing&lt;/code&gt;：代码签名（极少用于 Kubernetes 场景）；&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;email protection&lt;/code&gt;：邮件加密（与 Kubernetes 无关）。&lt;/p&gt;
+&lt;p&gt;CertificateSigningRequest 创建后，需要集群管理员审批证书，当然k8s 提供了自动审批证书的方式，在此不展开。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt; kubectl get CertificateSigningRequest
+NAME           AGE   SIGNERNAME                            REQUESTOR          REQUESTEDDURATION   CONDITION
+device-1-csr   23h   kubernetes.io/kube-apiserver-client   kubernetes-admin   &amp;lt;none&amp;gt;              Pending
+&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;#审批 CSR（集群管理员操作）
+kubectl certificate approve device-1-csr
+&lt;/code&gt;&lt;/pre&gt;&lt;h3 id=&#34;获取证书&#34;&gt;获取证书&lt;/h3&gt;
+&lt;p&gt;审批完成后可以在CertificateSigningRequest 对象的status 中获取证书&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;#提取生成的证书
+kubectl get csr device-1-csr -o jsonpath=&amp;#39;{.status.certificate}&amp;#39; | base64 -d &amp;gt; device-1.crt
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;证书文件大致如下：&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat cmss-test-csr.crt
+-----BEGIN CERTIFICATE-----
+MIIDCjCCAfKgAwIBAgIQNd15F7R3t617JBr/gFH91jANBgkqhkiG9w0BAQsFADAV
+MRMwEQYDVQQDEwprdWJlcm5ldGVzMB4XDTI1MTExMDA3MDkwNFoXDTM1MTEwODA3
+...
+2zvtz2vlZzf7CyC7lyxloj0VAn0QI10CZmAmj6SnS+JCbSN69wpa9l+Yvn0DHlSw
+NVe22bGfnu6aIiNpc9A=
+-----END CERTIFICATE-----
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;用户授权&#34;&gt;用户授权&lt;/h2&gt;
+&lt;p&gt;前文中在CSR 中指定了&lt;code&gt;/CN=device-1/O=devices&lt;/code&gt;，在证书中也包含相应信息。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;openssl x509 -in test-csr.crt -text -noout
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+...
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN = kubernetes
+        Validity
+...
+        Subject: O = test01, CN = test
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+...
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Extended Key Usage:
+                TLS Web Client Authentication
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            X509v3 Authority Key Identifier:
+                keyid:...
+
+    Signature Algorithm: sha256WithRSAEncryption
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;创建对应的ClusterRole，描述GET根路径的权限&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat cr.yaml
+# 保存为 corrected-api-root-access.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: api-root-access
+rules:
+- nonResourceURLs: [&amp;#34;/&amp;#34;]  # 针对根路径（非资源URL）
+  verbs: [&amp;#34;get&amp;#34;]          # 允许get操作
+- nonResourceURLs: [&amp;#34;/apis&amp;#34;]  # 针对/apis路径（非资源URL）
+  verbs: [&amp;#34;get&amp;#34;, &amp;#34;list&amp;#34;]      # 允许get和list操作
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;并且创建对应的ClusterRoleBinding&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;cat crb.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cmss-test-crb-1  # 绑定名称，可自定义
+subjects:
+- kind: User  # 主体类型：用户（证书中的CN对应此用户名）也可以指定group
+  name: test  # 用户名，必须与证书中的CN一致（这里是cmss-test）
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole  # 关联的角色类型：集群角色
+  name:  api-root-access # 关联的角色名称（上一步创建的）
+  apiGroup: rbac.authorization.k8s.io
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这时用户test就拥有了api-root-access 描述的权限。&lt;/p&gt;
+&lt;h3 id=&#34;实验&#34;&gt;实验&lt;/h3&gt;
+&lt;p&gt;不使用证书，直接向集群请求信息，请求会被拒绝&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;curl -k https://10.151.14.48:6443
+{
+  &amp;#34;kind&amp;#34;: &amp;#34;Status&amp;#34;,
+  &amp;#34;apiVersion&amp;#34;: &amp;#34;v1&amp;#34;,
+  &amp;#34;metadata&amp;#34;: {},
+  &amp;#34;status&amp;#34;: &amp;#34;Failure&amp;#34;,
+  &amp;#34;message&amp;#34;: &amp;#34;Unauthorized&amp;#34;,
+  &amp;#34;reason&amp;#34;: &amp;#34;Unauthorized&amp;#34;,
+  &amp;#34;code&amp;#34;: 401
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;为证书相关用户添加对应权限后，请求成功&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;curl   --cert test-csr.crt   --key cert/test.key   --cacert ca.crt   https://10.151.14.48:6443/
+{
+  &amp;#34;paths&amp;#34;: [
+    &amp;#34;/.well-known/openid-configuration&amp;#34;,
+    &amp;#34;/api&amp;#34;,
+    &amp;#34;/api/v1&amp;#34;,
+    &amp;#34;/apis&amp;#34;,
+    &amp;#34;/apis/&amp;#34;,
+...
+&lt;/code&gt;&lt;/pre&gt;</content>
+            
+            
+            
+            
+            
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/categories/kubernetes/" term="kubernetes" label="kubernetes" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="http://longchuanzheng.github.io/tags/knowledge/" term="Knowledge" label="Knowledge" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
+        <entry>
             <title type="text">Kubeadm 代码走读</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/kubeadm/kubeadm/" />
             <id>http://longchuanzheng.github.io/posts/kubernetes/kubeadm/kubeadm/</id>
-            <updated>2025-10-29T11:30:18&#43;08:00</updated>
+            <updated>2025-11-05T19:48:14&#43;08:00</updated>
             <published>2025-10-29T11:30:00&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -354,9 +547,33 @@ wait-control-plane     EXPERIMENTAL: Wait for the control plane to start
 if err := prepareAndWriteEtcdStaticPod(manifestDir, patchesDir, cfg, endpoint, nodeName, cluster, isDryRun); err != nil {
     return err
 }
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;而最关键的步骤是&lt;code&gt;kubelet-start&lt;/code&gt;，虽然在 kubeadm 中仅仅是启动kubelet，kubelet中需要使用本地bootstrap.conf 向api-server 申请正式的证书，然后通过正式的证书去启动kubelet。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get pod -n kube-system kube-apiserver-csy-wx-pm-os01-eis-node01 -o yaml |grep boot
+    - --enable-bootstrap-token-auth=true
+&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get pod -n kube-system kube-controller-manager-csy-wx-pm-os01-eis-node01 -o yaml |grep boot
+    - --controllers=*,bootstrapsigner,tokencleaner
+&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get secret -n kube-system bootstrap-token-eks305 -o yaml
+apiVersion: v1
+data:
+  auth-extra-groups: system:bootstrappers:kubeadm:default-node-token
+  expiration: MjAyNS0xMS0wNVQxMToyMjoxMiswODowMA==
+  token-id: ZWtzMzA1
+  token-secret: ZTFvdDR1d212YWZkbzB3dw==
+  usage-bootstrap-authentication: dHJ1ZQ==
+  usage-bootstrap-signing: dHJ1ZQ==
+kind: Secret
+metadata:
+  creationTimestamp: &amp;#34;2025-11-04T03:22:12Z&amp;#34;
+  name: bootstrap-token-eks305
+  namespace: kube-system
+  resourceVersion: &amp;#34;1214586432&amp;#34;
+  uid: cf251fe7-b624-4426-92e9-ef95d80b895f
+type: bootstrap.kubernetes.io/token
 &lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://blog.csdn.net/shida_csdn/article/details/83269238&#34;&gt;https://blog.csdn.net/shida_csdn/article/details/83269238&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://blog.csdn.net/2401_86023597/article/details/141498671&#34;&gt;https://blog.csdn.net/2401_86023597/article/details/141498671&lt;/a&gt;&lt;/p&gt;
 </content>
             
             
@@ -2590,7 +2807,7 @@ func validateRestoreStatus(ar *admissionv1.AdmissionRequest, vm *v1.VirtualMachi
             <title type="text">ServiceAccount初探</title>
             <link rel="alternate" type="text/html" href="http://longchuanzheng.github.io/posts/kubernetes/serviceaccount/serviceaccount/" />
             <id>http://longchuanzheng.github.io/posts/kubernetes/serviceaccount/serviceaccount/</id>
-            <updated>2025-03-18T20:13:55&#43;08:00</updated>
+            <updated>2025-11-04T15:31:59&#43;08:00</updated>
             <published>2025-03-18T17:44:05&#43;08:00</published>
             <author>
                     <name>Longchuanzheng</name>
@@ -2754,6 +2971,58 @@ subjects:
 - kind: ServiceAccount
   name: multus
   namespace: kube-system
+&lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;kubectl-中的身份&#34;&gt;kubectl 中的身份&lt;/h2&gt;
+&lt;p&gt;众所周知，kubectl 命令使用了~/.kube 目录下的config 文件，其中users.name 是&lt;code&gt;kubernetes-admin&lt;/code&gt;。这个用户在kubernetes 中没有对应的资源，从证书中我们可以看到证书包含了kubernetes-admin 是属于 system:masters用户组。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl config view --raw -o jsonpath=&amp;#39;{.users[?(@.name==&amp;#34;kubernetes-admin&amp;#34;)].user.client-certificate-data}&amp;#39; | base64 -d | openssl x509 -text -noout | grep -A 3 &amp;#34;Subject:&amp;#34;
+        Subject: O = system:masters, CN = kubernetes-admin
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;在clusterrolebinding 中指定了system:masters 用户组是绑定在cluster-admin 用户上&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get clusterrolebinding cluster-admin -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: &amp;#34;true&amp;#34;
+  creationTimestamp: &amp;#34;2024-04-23T11:33:58Z&amp;#34;
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: cluster-admin
+  resourceVersion: &amp;#34;142&amp;#34;
+  uid: 36063b5d-4188-46f7-8d51-ec9eb3c31009
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:masters
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;可以看到这个ClusterRole的权限非常高&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get ClusterRole cluster-admin -o yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: &amp;#34;true&amp;#34;
+  creationTimestamp: &amp;#34;2024-04-23T11:33:58Z&amp;#34;
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: cluster-admin
+  resourceVersion: &amp;#34;80&amp;#34;
+  uid: 5c1d2203-071e-4f7d-9257-c1f666c4b6ba
+rules:
+- apiGroups:
+  - &amp;#39;*&amp;#39;
+  resources:
+  - &amp;#39;*&amp;#39;
+  verbs:
+  - &amp;#39;*&amp;#39;
+- nonResourceURLs:
+  - &amp;#39;*&amp;#39;
+  verbs:
+  - &amp;#39;*&amp;#39;
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;参考：&lt;/p&gt;
 &lt;p&gt;[1]https://www.toutiao.com/article/7200915709839557123/?channel=&amp;amp;source=search_tab&amp;amp;upstream_biz=toutiao_pc&amp;amp;wxshare_count=2&amp;amp;utm_source=&amp;amp;source=m_redirect&amp;amp;wid=1732759270032&lt;/p&gt;
 &lt;p&gt;[2]https://kubernetes.io/zh-cn/docs/tasks/configure-pod-container/configure-service-account/&lt;/p&gt;
