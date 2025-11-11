@@ -23,7 +23,7 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Tue, 11 Nov 2025 15:39:22 &#43;0800</lastBuildDate>
+        <lastBuildDate>Tue, 11 Nov 2025 19:31:08 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
@@ -554,27 +554,12 @@ if err := prepareAndWriteEtcdStaticPod(manifestDir, patchesDir, cfg, endpoint, n
     return err
 }
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;而最关键的步骤是&lt;code&gt;kubelet-start&lt;/code&gt;，虽然在 kubeadm 中仅仅是启动kubelet，kubelet中需要使用本地bootstrap.conf 向api-server 申请正式的证书，然后通过正式的证书去启动kubelet。&lt;/p&gt;
+&lt;p&gt;在api-server 中需要配置&lt;code&gt;enable-bootstrap-token-auth&lt;/code&gt;&lt;/p&gt;
 &lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get pod -n kube-system kube-apiserver-csy-wx-pm-os01-eis-node01 -o yaml |grep boot
     - --enable-bootstrap-token-auth=true
-&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get pod -n kube-system kube-controller-manager-csy-wx-pm-os01-eis-node01 -o yaml |grep boot
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;需要controller-manager 中启动**&lt;code&gt;bootstrapsigner&lt;/code&gt;（引导签名器控制器）&lt;strong&gt;和&lt;/strong&gt;&lt;code&gt;tokencleaner&lt;/code&gt;（令牌清理器控制器）**，配置自动签发kubelet 的加入节点时的证书签名请求（CSR）。&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get pod -n kube-system kube-controller-manager-csy-wx-pm-os01-eis-node01 -o yaml |grep boot
     - --controllers=*,bootstrapsigner,tokencleaner
-&lt;/code&gt;&lt;/pre&gt;&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;kubectl get secret -n kube-system bootstrap-token-eks305 -o yaml
-apiVersion: v1
-data:
-  auth-extra-groups: system:bootstrappers:kubeadm:default-node-token
-  expiration: MjAyNS0xMS0wNVQxMToyMjoxMiswODowMA==
-  token-id: ZWtzMzA1
-  token-secret: ZTFvdDR1d212YWZkbzB3dw==
-  usage-bootstrap-authentication: dHJ1ZQ==
-  usage-bootstrap-signing: dHJ1ZQ==
-kind: Secret
-metadata:
-  creationTimestamp: &amp;#34;2025-11-04T03:22:12Z&amp;#34;
-  name: bootstrap-token-eks305
-  namespace: kube-system
-  resourceVersion: &amp;#34;1214586432&amp;#34;
-  uid: cf251fe7-b624-4426-92e9-ef95d80b895f
-type: bootstrap.kubernetes.io/token
 &lt;/code&gt;&lt;/pre&gt;&lt;h2 id=&#34;参考&#34;&gt;参考&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-join/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&lt;/a&gt;&lt;/p&gt;
