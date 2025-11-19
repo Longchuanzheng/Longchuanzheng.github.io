@@ -23,10 +23,132 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
         
-        <lastBuildDate>Tue, 11 Nov 2025 19:31:08 &#43;0800</lastBuildDate>
+        <lastBuildDate>Wed, 19 Nov 2025 10:06:50 &#43;0800</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="http://longchuanzheng.github.io/rss.xml" />
         
+        
+            <item>
+                <title>virtio 方案简述</title>
+                <link>http://longchuanzheng.github.io/posts/virt/virtio/</link>
+                <guid isPermaLink="true">http://longchuanzheng.github.io/posts/virt/virtio/</guid>
+                <pubDate>Mon, 17 Nov 2025 16:39:05 &#43;0800</pubDate>
+                
+                    <author>zal42@outlook.com (Longchuanzheng)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh)</copyright>
+                
+                    <description>&lt;p&gt;对于虚拟化技术入门者来说，virtio 是一项容易让人疑惑的技术。从表象看虚机定义时磁盘bus可以指定为virtio，网卡亦可以指定为virtio类型。virtio是相对于全虚拟化（qemu）和硬件辅助虚拟化（hostpassthrough）的半虚拟化IO方案， 顾名思义是一种虚拟化IO技术，对于guest来说包括虚拟化设备，设备驱动，对于host来说包括如何将guest中的IO请求落到真正的物理硬件上的。而网络virtio方案Virtio-net是较为复杂的virtio技术。本文为笔者阅读红帽博客时的记录，从vhost-net/virtio-net  到 vhost-user/virtio-pmd，逐渐深入。&lt;/p&gt;
+&lt;h2 id=&#34;virtio-基本原理&#34;&gt;virtio 基本原理&lt;/h2&gt;
+&lt;p&gt;virtio 总体上包括前端驱动，后端设备和前后端传输协议。前端驱动在guest内，以virtio 设备驱动的形式存在，后端设备负责处理前端驱动的IO请求。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;1.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;p&gt;传统的纯模拟设备在工作的时候，会触发频繁的陷入陷出， 而且IO请求的内容要进行多次拷贝传递，严重影响了设备的IO性能。 virtio为了提升设备的IO性能，采用了共享内存机制， 前端驱动会提前申请好一段物理地址空间用来存放IO请求，然后将地址分享给后端（典型的如 guest 内virtio 设备通过pcie 机制，占用某段gpa，然后该段内存地址被分享给qemu 种实现的virtio后端？）。 前端驱动在下发IO请求后，后端可以直接从共享内存中取出请求，然后将完成后的结果又直接写到虚拟机对应地址上去。 &lt;strong&gt;整个过程中可以做到直投直取，省去了不必要的数据拷贝开销&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;Virtqueue&lt;/code&gt;是整个virtio方案的灵魂所在&lt;/strong&gt;。每个virtqueue都包含3张表， &lt;code&gt;Descriptor Table&lt;/code&gt;存放了IO请求描述符，&lt;code&gt;Available Ring&lt;/code&gt;记录了当前哪些描述符是可用的， &lt;code&gt;Used Ring&lt;/code&gt;记录了哪些描述符已经被后端使用了。&lt;/p&gt;
+&lt;p&gt;整个virtio协议中设备IO请求的工作机制可以简单地概括为：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;前端驱动将IO请求放到&lt;code&gt;Descriptor Table&lt;/code&gt;中，然后将索引更新到&lt;code&gt;Available Ring&lt;/code&gt;中，然后kick后端去取数据；&lt;/li&gt;
+&lt;li&gt;后端取出IO请求进行处理，然后结果刷新到&lt;code&gt;Descriptor Table&lt;/code&gt;中再更新&lt;code&gt;Using Ring&lt;/code&gt;，然后发送中断notify前端。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&#34;2.png&#34; alt=&#34;img&#34;&gt;&lt;/p&gt;
+&lt;h2 id=&#34;virtio-networking&#34;&gt;virtio-networking&lt;/h2&gt;
+&lt;p&gt;virtio-networking实现了网卡驱动，包括控制平面和数据平面：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;控制面负责在guest和host 之间建立和终止数据平面。包括通信所用的内存地址是怎么在前后端同步的，前后端通过什么机制去通知对方数据已经准备好。&lt;/li&gt;
+&lt;li&gt;数据平面用来实际传输IO 数据。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;而从实现上就可以分为virtio spec 和vhost protocol&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;virtio spec 包含了实现virtio的具体规范，包括如何建立控制平面和数据平面，如数据平面使用&lt;code&gt;virtqueue&lt;/code&gt;实现。&lt;/li&gt;
+&lt;li&gt;vhost protocol 描述了将数据平面进行卸载的方法，因此vhost protocol 仅仅是为了性能，而这也是必须的。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果我们在qemu 中实现数据面，那么guest的每一次IO请求（数据从实际物理设备到内核再从内核到qemu，相反亦然成立）则都需要做一次内核态用户态转换。基于产生的vhost protocol 包括将数据面卸载到内核 (vhost-net)  或直接卸载到某个用户态进程 (vhost-user)。&lt;/p&gt;
+&lt;h3 id=&#34;不卸载virtio后端在qemu中&#34;&gt;不卸载：virtio后端在qemu中&lt;/h3&gt;
+&lt;p&gt;当需要发送数据包时，driver 将发送一个buffer(将数据加入Virtqueue种)，由于virtio 后端在qemu 内，qemu 可以轻松的定位并读写对应buffer&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;3.png&#34; alt=&#34;Figure 1: virtio-net on qemu&#34;&gt;&lt;/p&gt;
+&lt;p&gt;下图基于pci 实现描述了virtio driver 发送数据包的过程，driver 通过 pci 机制与后端 device 通信，当数据包准备完毕，写入 buffer 后，触发&lt;code&gt;Available Buffer Notification&lt;/code&gt;通知设备，这时由qemu接管并将数据包通过tap设备发送。然后qemu 通过向Virtqueue中写入数据表示之前的发送操作已经完成并触发vcpu 的中断。接受数据包的情况类似，但是相关的buffer 是有guest 准备的，通过控制平面qemu 中的设备可以轻松的发现并向对应内存写入数据。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;4.jpg&#34; alt=&#34;Figure 2: Qemu virtio sending buffer flow diagram&#34;&gt;&lt;/p&gt;
+&lt;h3 id=&#34;vhost-netvirtio后端在内核&#34;&gt;vhost-net：virtio后端在内核&lt;/h3&gt;
+&lt;p&gt;在qemu 中实现virtio 后端有一些效率低下的地方：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;virtio 驱动发送&lt;code&gt;Available Buffer Notification&lt;/code&gt; 后vcpu 停止运行，qemu 将接管后续流程，这种上下文切换将浪费大量资源&lt;/li&gt;
+&lt;li&gt;数据包的收发都通过tap设备&lt;/li&gt;
+&lt;li&gt;通过ioctl去发送&lt;code&gt;Available Buffer Notification&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;需要一套系统调用去恢复vcpu的执行&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因此设计了vhost 机制去突破这些限制，vhost 实现了在qemu 之外的数据面，这个外部组件需要了解hypervisor的内存布局，从而找到Virtqueue和缓冲区。还需要kvm和vhost 组件之间交互的一组描述符，从而可以跳过qemu 直接通信，当然这是一个可以开启的特性。&lt;/p&gt;
+&lt;p&gt;vhost-net 是实现在内核中的一种vhost 机制。qemu 和vhost-net 使用 ioctl 交换消息并通过irqfd 和 ioeventfd 去和guest 交换信息。&lt;/p&gt;
+&lt;p&gt;vhost-net 内核模块加载后会生成/dev/vhost-net 文件，当qemu 启动时指定vhost-net 时，会将guest 的内存布局传递给vhost-net 内核模块，并将会创建一个vhost-$pid的内核线程。&lt;/p&gt;
+&lt;p&gt;qemu 分配 eventfd 注册到guest 和KVM 中，因此KVM 和guest 通信可以绕开qemu. vhost-$pid 进程轮询这个eventfd，当guest 写入特定内存时 KVM 将写入这个eventfd，这种方案叫ioeventfd.&lt;/p&gt;
+&lt;p&gt;qemu 还分配了另一个eventfd，注册到vhost 和KVM 中实现vCPU的中断注入，这被称为irqfd。这使得vhost 可以注入vcpu中断。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;5.png&#34; alt=&#34;Figure 3: vhost-net block diagram&#34;&gt;&lt;/p&gt;
+&lt;p&gt;这时qemu 中的virtio-net device 与vhost-net kernel 交互，生成vhost-net driver  作为数据面 driver。guest 中的virtio-net 驱动的pci 配置、内存布局最终会被同步到vhost-net driver 并且通过ioeventfd，irqfd，guest 和KVM 、vhost 和KVM 可以进行交互。&lt;/p&gt;
+&lt;p&gt;当guest 中数据发送时，guest 通过pci通知KVM，KVM 不退出到qemu，而是直接使用eventfd 去通知vhost-net去处理对应Virtqueue 中的数据，数据处理完成后，在通过irqfd 去通知KVM 数据处理完成，KVM 使用中断通知driver 数据已发送。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;6.png&#34; alt=&#34;Figure 4: vhost-net sending buffer diagram flow&#34;&gt;&lt;/p&gt;
+&lt;h3 id=&#34;vhost-uservirtio后端用户态实现&#34;&gt;vhost-user：virtio后端用户态实现&lt;/h3&gt;
+&lt;p&gt;通过vhost-net，我们已经解决了guest os virtio 过程中的用户态、内核态切换。这时ovs 使用的是传统的用户态（慢路径）内核态（快路径）的方案。结合dpdk 技术后，快速路径也位于用户态，最大限度地减少了内核与用户领域的交互，并利用了 DPDK 提供的高性能。结果是，与原生 OVS 相比，使用 DPDK 的 OVS 性能提高了 ~10 倍。如果使用基于dpdk的ovs 那么vhost-net 位于内核态就成了缺陷，如果让virtio 的服务端也位于用户态，那么virtio 服务端直接放在 dpdk的ovs中，可以获得更好的性能。在dpdk 中包含了 vhost-user库 ，是实现 vhost 协议的用户空间库。还包含了 Virtio-PMD，virtio-pmd 驱动程序基于 DPDK 的 PMD 抽象构建，实现了 virtio 规范，并允许以标准、有效的方式使用虚拟设备。&lt;/p&gt;
+&lt;h4 id=&#34;vhost-user-library-in-dpdk&#34;&gt;Vhost-user library in DPDK&lt;/h4&gt;
+&lt;p&gt;该库内置于 DPDK 中，是 vhost 协议的用户空间实现，允许 qemu 将 virtio 设备数据包处理卸载到任何 DPDK 应用程序（例如 Open vSwitch）。&lt;/p&gt;
+&lt;p&gt;vhost protocol是一组消息和机制，旨在将 virtio 数据路径处理从 QEMU（想要卸载数据包处理的主）卸载到外部元素（配置 virtio 环并执行实际数据包处理的处理程序）。最相关的机制是：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;一组消息，允许主数据库将 virtqueue 的内存布局和配置发送到处理程序。&lt;/li&gt;
+&lt;li&gt;一对 eventfd 类型的文件描述符，允许来 guest 过主描述符并直接向处理程序发送和接收通知：可用缓冲区通知（从 guest 发送到处理程序，以指示有缓冲区准备处理）和已使用的缓冲区通知（从处理程序发送到 guest ，以指示它已完成处理缓冲区）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;vhost-user 库和 vhost-net 内核驱动程序之间的主要区别在于通信通道。虽然 vhost-net 内核驱动程序使用 ioctl 实现此通道，但 vhost-user 库定义了通过 unix 套接字发送的消息的结构。&lt;/p&gt;
+&lt;p&gt;DPDK 应用程序可以配置为提供 unix 套接字（virtio服务端）并让 QEMU 连接到它（virtio客户端）。反之亦然，这允许在不重新启动 VM 的情况下重新启动 DPDK。&lt;/p&gt;
+&lt;p&gt;与 vhost-net 内核模块一样，vhost-user 库允许主程序（qemu）通过执行以下重要作来配置数据平面卸载：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;功能协商：virtio 功能和 vhost 用户特定功能都以类似的方式协商：首先，主函数“获取”处理程序支持的功能位掩码，然后“设置”它也支持的功能子集。&lt;/li&gt;
+&lt;li&gt;内存区域配置：主程序可以设置设置内存映射区域，以便处理程序可以 mmap（）。&lt;/li&gt;
+&lt;li&gt;Vring 配置：主程序设置要使用的 virtqueue 数量及其在内存区域中的地址。请注意，vhost-user 支持多队列，因此可以配置多个 virtqueue 以提高性能。&lt;/li&gt;
+&lt;li&gt;通过传递文件描述符（fd）来实现“触发 / 唤醒”（比如虚拟机需要通知主机处理某个事件）、“调用 / 响应”（比如主机需要通知虚拟机某个操作已完成）：ioeventfd机制为Guest提供了向virtio 服务端发送通知的快捷通道，对应地，irqfd机制提供了virtio 服务端向Guest发送通知的快捷通道。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;通过这些机制，DPDK 应用程序现在可以通过与guest 共享内存区域来处理数据包，并且可以直接与guest发送和接收通知，而无需 qemu 进行干预。&lt;/p&gt;
+&lt;p&gt;QEMU 的 virtio 设备模型将一切串在一起：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;它模拟一个 virtio 设备，该设备显示在客户机中的特定 PCI 端口中，客户机可以无缝探测和配置该端口。此外，它还将 ioeventfd 映射到模拟设备的内存映射 I/O 空间，并将 irqfd 映射到其全局系统中断 （GSI） 。结果是，guest不知道通知和中断都在没有 QEMU 干预的情况下转发到 vhost-user 库或从虚拟主机用户库转发。&lt;/li&gt;
+&lt;li&gt;它不是实现实际的 virtio 数据路径，而是充当 vhost-user 协议中的主节点，将此处理卸载到 DPDK 进程中的 vhost-user 库&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;下图显示了作为 DPDK-APP 的一部分运行的 vhost-user-library 如何使用 virtio-device-model 和 virtio-pci 设备与 qemu 和 guest 交互：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;7.png&#34; alt=&#34;How the vhost-user-library running as part of the DPDK-APP interacts with qemu and the guest using the virtio-device-model and the virtio-pci device&#34;&gt;&lt;/p&gt;
+&lt;p&gt;guest 创建时通过qemu 和dpdk app 交互，virtio-device-model 使用 vhost-user 协议来配置 vhost-user以及设置 irqfd 和 ioeventfd 文件描述符。&lt;/p&gt;
+&lt;h2 id=&#34;参考&#34;&gt;参考：&lt;/h2&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.redhat.com/en/blog/introduction-virtio-networking-and-vhost-net&#34;&gt;https://www.redhat.com/en/blog/introduction-virtio-networking-and-vhost-net&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.redhat.com/en/blog/deep-dive-virtio-networking-and-vhost-net&#34;&gt;https://www.redhat.com/en/blog/deep-dive-virtio-networking-and-vhost-net&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.redhat.com/en/blog/journey-vhost-users-realm&#34;&gt;https://www.redhat.com/en/blog/journey-vhost-users-realm&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.openeuler.org/zh/blog/yorifang/virtio-spec-overview.html&#34;&gt;https://www.openeuler.org/zh/blog/yorifang/virtio-spec-overview.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://aijishu.com/a/1060000000240318#item-1&#34;&gt;https://aijishu.com/a/1060000000240318#item-1&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://blog.csdn.net/anyegongjuezjd/article/details/125607118&#34;&gt;https://blog.csdn.net/anyegongjuezjd/article/details/125607118&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/haiyonghao/p/14440723.html&#34;&gt;https://www.cnblogs.com/haiyonghao/p/14440723.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://zhuanlan.zhihu.com/p/547777878&#34;&gt;https://zhuanlan.zhihu.com/p/547777878&lt;/a&gt;&lt;/p&gt;
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/categories/virt/">virt</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="http://longchuanzheng.github.io/tags/knowledge/">Knowledge</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>kubernetes 权限初探</title>
@@ -565,6 +687,12 @@ if err := prepareAndWriteEtcdStaticPod(manifestDir, patchesDir, cfg, endpoint, n
 &lt;p&gt;&lt;a href=&#34;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&#34;&gt;https://v1-30.kubernetes.ac.cn/docs/reference/setup-tools/kubeadm/kubeadm-init/&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://blog.csdn.net/shida_csdn/article/details/83269238&#34;&gt;https://blog.csdn.net/shida_csdn/article/details/83269238&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://blog.csdn.net/2401_86023597/article/details/141498671&#34;&gt;https://blog.csdn.net/2401_86023597/article/details/141498671&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;join相关：&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://mritd.com/2018/01/07/kubernetes-tls-bootstrapping-note/&#34;&gt;https://mritd.com/2018/01/07/kubernetes-tls-bootstrapping-note/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://lingxiankong.github.io/2018-09-18-kubelet-bootstrap-process.html&#34;&gt;https://lingxiankong.github.io/2018-09-18-kubelet-bootstrap-process.html&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://izsk.me/2020/01/05/Kubernetes-Bootstrap-Node/#Kubelet%E7%94%B3%E8%AF%B7%E8%AF%81%E4%B9%A6%E5%A4%A7%E8%87%B4%E6%B5%81%E7%A8%8B&#34;&gt;https://izsk.me/2020/01/05/Kubernetes-Bootstrap-Node/#Kubelet%E7%94%B3%E8%AF%B7%E8%AF%81%E4%B9%A6%E5%A4%A7%E8%87%B4%E6%B5%81%E7%A8%8B&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://mritd.com/2018/08/28/kubernetes-tls-bootstrapping-with-bootstrap-token/&#34;&gt;https://mritd.com/2018/08/28/kubernetes-tls-bootstrapping-with-bootstrap-token/&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.cnblogs.com/wjoyxt/p/9963392.html&#34;&gt;https://www.cnblogs.com/wjoyxt/p/9963392.html&lt;/a&gt;&lt;/p&gt;
 </description>
                 
                 
